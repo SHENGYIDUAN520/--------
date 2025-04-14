@@ -1,0 +1,11 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
+[前端开发.md](mdc:前端开发.md)[后端开发.md](mdc:后端开发.md)[接口.md](mdc:接口.md)，请你每次开发完成后都进行记录，方便下次打开对话继续项目开发
