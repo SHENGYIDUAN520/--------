@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - 智能陪护数据监控平台</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>智能陪护数据监控平台 > 系统设置</h1>
+            <div class="current-time" id="current-time">2024年4月18日 12:54:39</div>
+        </header>
+        
+        <main class="settings-container">
+            <div class="settings-header">
+                <h2 class="settings-title"><i class="bi bi-gear"></i> 系统设置</h2>
+            </div>
+            
+            <div class="settings-main">
+                <!-- 左侧导航菜单 -->
+                <div class="settings-sidebar">
+                    <ul class="settings-menu">
+                        <li class="settings-menu-item active" data-tab="account">
+                            <a href="#account" class="settings-menu-link">
+                                <i class="bi bi-person-circle"></i> 账户设置
+                            </a>
+                        </li>
+                        <li class="settings-menu-item" data-tab="elderly">
+                            <a href="#elderly" class="settings-menu-link">
+                                <i class="bi bi-people"></i> 老人管理
+                            </a>
+                        </li>
+                        <li class="settings-menu-item" data-tab="contact">
+                            <a href="#contact" class="settings-menu-link">
+                                <i class="bi bi-telephone"></i> 联系人管理
+                            </a>
+                        </li>
+                        <li class="settings-menu-item" data-tab="system">
+                            <a href="#system" class="settings-menu-link">
+                                <i class="bi bi-sliders"></i> 系统参数
+                            </a>
+                        </li>
+                        <li class="settings-menu-item" data-tab="device">
+                            <a href="#device" class="settings-menu-link">
+                                <i class="bi bi-hdd-rack"></i> 设备管理
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- 右侧内容区域 -->
+                <div class="settings-content">
+                    <!-- 账户设置 -->
+                    <div class="tab-content active" id="account-tab">
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-person-circle"></i> 个人信息</h3>
+                            <form class="settings-form" id="profileForm">
+                                <div class="form-group">
+                                    <label class="form-label">用户名</label>
+                                    <input type="text" class="form-control" id="username" value="admin" readonly>
+                                    <small class="form-hint">用户名不可修改</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">真实姓名</label>
+                                    <input type="text" class="form-control" id="realName" value="管理员" placeholder="请输入您的真实姓名">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">电子邮箱</label>
+                                    <input type="email" class="form-control" id="email" value="admin@example.com" placeholder="请输入您的电子邮箱">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">手机号码</label>
+                                    <input type="tel" class="form-control" id="phone" value="13800138000" placeholder="请输入您的手机号码">
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> 保存修改</button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-key"></i> 修改密码</h3>
+                            <form class="settings-form" id="passwordForm">
+                                <div class="form-group">
+                                    <label class="form-label">当前密码</label>
+                                    <input type="password" class="form-control" id="currentPassword" required placeholder="请输入当前密码">
+                                    <small class="form-hint">首次登录默认密码为admin</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">新密码</label>
+                                    <input type="password" class="form-control" id="newPassword" required placeholder="请输入新密码">
+                                    <small class="form-hint">密码长度至少6位，包含字母和数字</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">确认新密码</label>
+                                    <input type="password" class="form-control" id="confirmPassword" required placeholder="请再次输入新密码">
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-shield-lock"></i> 更新密码</button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-bell"></i> 通知设置</h3>
+                            <div class="list-container">
+                                <div class="list-item">
+                                    <div class="item-info">
+                                        <h4 class="item-title">电子邮件通知</h4>
+                                        <p class="item-description">接收紧急情况的电子邮件通知</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="list-item">
+                                    <div class="item-info">
+                                        <h4 class="item-title">短信通知</h4>
+                                        <p class="item-description">接收紧急情况的短信通知</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="list-item">
+                                    <div class="item-info">
+                                        <h4 class="item-title">每日报告</h4>
+                                        <p class="item-description">接收每日健康状况报告</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 老人管理 -->
+                    <div class="tab-content" id="elderly-tab">
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3 class="section-title"><i class="bi bi-people"></i> 老人信息管理</h3>
+                                <button class="btn btn-primary" data-modal="elderly-modal">
+                                    <i class="bi bi-plus"></i> 添加老人
+                                </button>
+                            </div>
+                            
+                            <div class="list-container">
+                                <div class="list-item" data-id="1">
+                                    <div class="item-info">
+                                        <h4 class="item-title">张爷爷</h4>
+                                        <p class="item-description">年龄：78 | 房间：301</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary btn-edit" data-modal="elderly-modal">
+                                            <i class="bi bi-pencil-square"></i> 编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-delete">
+                                            <i class="bi bi-trash"></i> 删除
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="list-item" data-id="2">
+                                    <div class="item-info">
+                                        <h4 class="item-title">李奶奶</h4>
+                                        <p class="item-description">年龄：75 | 房间：302</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary btn-edit" data-modal="elderly-modal">
+                                            <i class="bi bi-pencil-square"></i> 编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-delete">
+                                            <i class="bi bi-trash"></i> 删除
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="list-item" data-id="3">
+                                    <div class="item-info">
+                                        <h4 class="item-title">王爷爷</h4>
+                                        <p class="item-description">年龄：82 | 房间：303</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary btn-edit" data-modal="elderly-modal">
+                                            <i class="bi bi-pencil-square"></i> 编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-delete">
+                                            <i class="bi bi-trash"></i> 删除
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 联系人管理 -->
+                    <div class="tab-content" id="contact-tab">
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3 class="section-title"><i class="bi bi-telephone"></i> 紧急联系人管理</h3>
+                                <button class="btn btn-primary" data-modal="contact-modal">
+                                    <i class="bi bi-plus"></i> 添加联系人
+                                </button>
+                            </div>
+                            
+                            <div class="list-container">
+                                <div class="list-item" data-id="1">
+                                    <div class="item-info">
+                                        <h4 class="item-title">张小明</h4>
+                                        <p class="item-description">关系：张爷爷的儿子 | 电话：139****5678</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary btn-edit" data-modal="contact-modal">
+                                            <i class="bi bi-pencil-square"></i> 编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-delete">
+                                            <i class="bi bi-trash"></i> 删除
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="list-item" data-id="2">
+                                    <div class="item-info">
+                                        <h4 class="item-title">李小芳</h4>
+                                        <p class="item-description">关系：李奶奶的女儿 | 电话：138****5678</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary btn-edit" data-modal="contact-modal">
+                                            <i class="bi bi-pencil-square"></i> 编辑
+                                        </button>
+                                        <button class="btn btn-danger btn-delete">
+                                            <i class="bi bi-trash"></i> 删除
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 系统参数 -->
+                    <div class="tab-content" id="system-tab">
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-exclamation-triangle"></i> 报警参数设置</h3>
+                            <form class="settings-form" id="alarmForm">
+                                <div class="form-group">
+                                    <label class="form-label">久坐报警时间（分钟）</label>
+                                    <input type="number" class="form-control" id="sittingThreshold" value="60" min="10" max="180" placeholder="建议设置在30-120分钟之间">
+                                    <small class="form-hint">老人久坐超过此时间将触发提醒</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">夜间无活动报警时间（小时）</label>
+                                    <input type="number" class="form-control" id="inactiveThreshold" value="12" min="1" max="24" placeholder="建议设置在8-16小时之间">
+                                    <small class="form-hint">夜间连续无活动超过此时间将触发提醒</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">高温报警阈值（°C）</label>
+                                    <input type="number" class="form-control" id="highTempThreshold" value="38.0" min="37" max="42" step="0.1" placeholder="正常体温为36.3-37.2°C">
+                                    <small class="form-hint">体温超过此阈值将触发高温报警</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">心率过快报警阈值（次/分钟）</label>
+                                    <input type="number" class="form-control" id="highHeartRateThreshold" value="100" min="60" max="180" placeholder="老年人正常心率为60-100次/分钟">
+                                    <small class="form-hint">心率超过此阈值将触发心率过快报警</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">心率过慢报警阈值（次/分钟）</label>
+                                    <input type="number" class="form-control" id="lowHeartRateThreshold" value="50" min="30" max="70" placeholder="老年人正常心率为60-100次/分钟">
+                                    <small class="form-hint">心率低于此阈值将触发心率过慢报警</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-all"></i> 保存设置</button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-database"></i> 数据设置</h3>
+                            <form class="settings-form" id="dataForm">
+                                <div class="form-group">
+                                    <label class="form-label">数据刷新间隔（秒）</label>
+                                    <input type="number" class="form-control" id="refreshInterval" value="5" min="1" max="60" placeholder="建议设置在5-30秒之间">
+                                    <small class="form-hint">页面数据自动刷新的时间间隔</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">数据保存天数</label>
+                                    <input type="number" class="form-control" id="dataSaveDays" value="90" min="7" max="365" placeholder="建议设置在30-180天之间">
+                                    <small class="form-hint">系统将保存此天数内的历史数据</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-all"></i> 保存设置</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- 设备管理 -->
+                    <div class="tab-content" id="device-tab">
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3 class="section-title"><i class="bi bi-hdd-rack"></i> 已连接设备</h3>
+                                <button class="btn btn-primary" id="scanDevices">
+                                    <i class="bi bi-arrow-repeat"></i> 刷新设备
+                                </button>
+                            </div>
+                            
+                            <div class="list-container">
+                                <div class="list-item" data-id="1">
+                                    <div class="item-info">
+                                        <h4 class="item-title">智能手环-301</h4>
+                                        <p class="item-description">设备ID：WB-12345678 | 状态：已连接 | 电量：85%</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary device-settings">
+                                            <i class="bi bi-gear"></i> 设置
+                                        </button>
+                                        <button class="btn btn-danger device-disconnect">
+                                            <i class="bi bi-power"></i> 断开
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="list-item" data-id="2">
+                                    <div class="item-info">
+                                        <h4 class="item-title">监控摄像头-301</h4>
+                                        <p class="item-description">设备ID：CM-87654321 | 状态：已连接 | 分辨率：1080P</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary device-settings">
+                                            <i class="bi bi-gear"></i> 设置
+                                        </button>
+                                        <button class="btn btn-danger device-disconnect">
+                                            <i class="bi bi-power"></i> 断开
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="list-item" data-id="3">
+                                    <div class="item-info">
+                                        <h4 class="item-title">环境传感器-301</h4>
+                                        <p class="item-description">设备ID：ES-24681357 | 状态：已连接 | 类型：温湿度、空气质量</p>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn btn-primary device-settings">
+                                            <i class="bi bi-gear"></i> 设置
+                                        </button>
+                                        <button class="btn btn-danger device-disconnect">
+                                            <i class="bi bi-power"></i> 断开
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <nav class="navigation">
+            <a href="index.html" class="nav-item">仪表盘</a>
+            <a href="detail.html" class="nav-item">老人详情</a>
+            <a href="history.html" class="nav-item">历史数据</a>
+            <a href="settings.html" class="nav-item active">系统设置</a>
+        </nav>
+    </div>
+    
+    <!-- 模态窗口 - 老人添加/编辑 -->
+    <div class="modal" id="elderly-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加老人</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="elderlyForm">
+                    <input type="hidden" id="elderlyId">
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyName">姓名</label>
+                        <input type="text" class="form-control" id="elderlyName" required placeholder="请输入老人姓名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyAge">年龄</label>
+                        <input type="number" class="form-control" id="elderlyAge" min="60" max="120" required placeholder="请输入老人年龄">
+                        <small class="form-hint">年龄范围：60-120岁</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyRoom">房间号</label>
+                        <input type="text" class="form-control" id="elderlyRoom" required placeholder="请输入房间号">
+                        <small class="form-hint">例如：301</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger">取消</button>
+                <button class="btn btn-primary btn-submit" form="elderlyForm">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态窗口 - 联系人添加/编辑 -->
+    <div class="modal" id="contact-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加联系人</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <input type="hidden" id="contactId">
+                    <div class="form-group">
+                        <label class="form-label" for="contactName">姓名</label>
+                        <input type="text" class="form-control" id="contactName" required placeholder="请输入联系人姓名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="contactRelation">关系</label>
+                        <input type="text" class="form-control" id="contactRelation" required placeholder="与老人的关系">
+                        <small class="form-hint">例如：儿子、女儿、孙子等</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="contactPhone">联系电话</label>
+                        <input type="tel" class="form-control" id="contactPhone" pattern="[0-9]{11}" required placeholder="请输入11位手机号码">
+                        <small class="form-hint">格式：11位手机号码</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger">取消</button>
+                <button class="btn btn-primary btn-submit" form="contactForm">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/common.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html> 

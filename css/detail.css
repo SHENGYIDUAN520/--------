@@ -1,0 +1,174 @@
+/* 老人详情页面样式 */
+.back-link {
+    margin-bottom: 15px;
+}
+
+.back-link a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.back-link a:hover {
+    color: var(--accent-blue);
+}
+
+.detail-container {
+    margin-bottom: 20px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto auto auto;
+    grid-gap: 20px;
+    grid-template-areas:
+        "basic-info monitor"
+        "health-data activity"
+        "alerts trend";
+}
+
+/* 面板定位 */
+.basic-info {
+    grid-area: basic-info;
+}
+
+.monitor-panel {
+    grid-area: monitor;
+}
+
+.health-data {
+    grid-area: health-data;
+}
+
+.activity-panel {
+    grid-area: activity;
+}
+
+.alert-records {
+    grid-area: alerts;
+}
+
+.trend-chart {
+    grid-area: trend;
+}
+
+/* 信息内容样式 */
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+    min-width: 100px;
+}
+
+.info-value {
+    font-size: 15px;
+    color: var(--text-primary);
+}
+
+/* 实时监控样式 */
+.video-container {
+    width: 100%;
+    height: 200px;
+    background: #000;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.placeholder-video {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.video-controls {
+    display: flex;
+    justify-content: space-around;
+}
+
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976D2;
+    transform: translateY(-2px);
+}
+
+/* 记录列表样式 */
+.record-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.record-item {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+}
+
+.record-item:last-child {
+    border-bottom: none;
+}
+
+.record-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-right: 15px;
+    min-width: 100px;
+}
+
+.record-content {
+    font-size: 15px;
+    color: var(--accent-red);
+}
+
+/* 健康趋势图样式 */
+#health-trend-chart {
+    width: 100%;
+    height: 250px;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 992px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "basic-info"
+            "monitor"
+            "health-data"
+            "activity"
+            "alerts"
+            "trend";
+    }
+} 
