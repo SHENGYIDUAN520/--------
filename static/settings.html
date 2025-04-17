@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - 智能陪护数据监控平台</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>智能陪护数据监控平台 > 系统设置</h1>
+            <div class="current-time" id="current-time">2024年4月18日 12:54:39</div>
+        </header>
+        
+        <main class="settings-container">
+            <div class="settings-header">
+                <h2 class="settings-title"><i class="bi bi-gear"></i> 系统设置</h2>
+            </div>
+            
+            <div class="settings-main">
+                <!-- 左侧导航菜单 -->
+                <div class="settings-sidebar">
+                    <ul class="settings-menu">
+                        <li class="settings-menu-item active" data-tab="account">
+                            <a href="#account" class="settings-menu-link">
+                                <i class="bi bi-person-circle"></i> 账户设置
+                            </a>
+                        </li>
+                        <li class="settings-menu-item" data-tab="elderly">
+                            <a href="#elderly" class="settings-menu-link">
+                                <i class="bi bi-people"></i> 老人管理
+                            </a>
+                        </li>
+                        <li class="settings-menu-item" data-tab="contact">
+                            <a href="#contact" class="settings-menu-link">
+                                <i class="bi bi-telephone"></i> 联系人管理
+                            </a>
+                        </li>
+                        <li class="settings-menu-item" data-tab="system">
+                            <a href="#system" class="settings-menu-link">
+                                <i class="bi bi-sliders"></i> 系统参数
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- 右侧内容区域 -->
+                <div class="settings-content">
+                    <!-- 账户设置 -->
+                    <div class="tab-content active" id="account-tab">
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-person-circle"></i> 个人信息</h3>
+                            <form class="settings-form" id="profileForm">
+                                <div class="form-group">
+                                    <label class="form-label">用户名</label>
+                                    <input type="text" class="form-control" id="username" readonly>
+                                    <small class="form-hint">用户名不可修改</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">电子邮箱</label>
+                                    <input type="email" class="form-control" id="email" placeholder="请输入您的电子邮箱">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">手机号码</label>
+                                    <input type="tel" class="form-control" id="phone" placeholder="请输入您的手机号码">
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> 保存修改</button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-key"></i> 修改密码</h3>
+                            <form class="settings-form" id="passwordForm">
+                                <div class="form-group">
+                                    <label class="form-label">当前密码</label>
+                                    <input type="password" class="form-control" id="currentPassword" required placeholder="请输入当前密码">
+                                    <small class="form-hint">首次登录默认密码为admin</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">新密码</label>
+                                    <input type="password" class="form-control" id="newPassword" required placeholder="请输入新密码">
+                                    <small class="form-hint">密码长度至少6位，包含字母和数字</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">确认新密码</label>
+                                    <input type="password" class="form-control" id="confirmPassword" required placeholder="请再次输入新密码">
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-shield-lock"></i> 更新密码</button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-bell"></i> 通知设置</h3>
+                            <div class="list-container" id="notification-settings">
+                                <div class="loading-indicator">
+                                    <i class="bi bi-arrow-repeat"></i> 加载中...
+                                </div>
+                                <!-- 通知设置将从服务器动态加载 -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 老人管理 -->
+                    <div class="tab-content" id="elderly-tab">
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3 class="section-title"><i class="bi bi-people"></i> 老人信息管理</h3>
+                                <button class="btn btn-primary" data-modal="elderly-modal">
+                                    <i class="bi bi-plus"></i> 添加老人
+                                </button>
+                            </div>
+                            
+                            <div class="list-container" id="elderly-list">
+                                <div class="loading-indicator">
+                                    <i class="bi bi-arrow-repeat"></i> 加载中...
+                                </div>
+                                <!-- 老人列表将从服务器动态加载 -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 联系人管理 -->
+                    <div class="tab-content" id="contact-tab">
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3 class="section-title"><i class="bi bi-telephone"></i> 紧急联系人管理</h3>
+                                <button class="btn btn-primary" data-modal="contact-modal">
+                                    <i class="bi bi-plus"></i> 添加联系人
+                                </button>
+                            </div>
+                            
+                            <div class="list-container" id="contact-list">
+                                <div class="loading-indicator">
+                                    <i class="bi bi-arrow-repeat"></i> 加载中...
+                                </div>
+                                <!-- 联系人列表将从服务器动态加载 -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 系统参数 -->
+                    <div class="tab-content" id="system-tab">
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-camera-video"></i> 视频监控设置</h3>
+                            <form class="settings-form" id="videoForm">
+                                <div class="form-group">
+                                    <label class="form-label">摄像头设备</label>
+                                    <div class="form-static" id="camera-model">加载中...</div>
+                                    <small class="form-hint">已连接的摄像头型号</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">视频清晰度</label>
+                                    <select class="form-control" id="videoResolution">
+                                        <option value="720p">标清 (720p)</option>
+                                        <option value="1080p">高清 (1080p)</option>
+                                    </select>
+                                    <small class="form-hint">庐山派K230支持最高1080p分辨率</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">视频帧率 (fps)</label>
+                                    <input type="number" class="form-control" id="videoFps" min="15" max="30" placeholder="建议设置在15-30之间">
+                                    <small class="form-hint">更高帧率画面更流畅，但需要更多带宽</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">服务器地址</label>
+                                    <input type="text" class="form-control" id="serverUrl" placeholder="输入服务器地址">
+                                    <small class="form-hint">K230开发板将向此地址发送视频流</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">视频保存天数</label>
+                                    <input type="number" class="form-control" id="videoSaveDays" min="7" max="90" placeholder="建议设置在7-30天之间">
+                                    <small class="form-hint">系统将保存此天数内的监控视频</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-all"></i> 保存设置</button>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-database"></i> 数据设置</h3>
+                            <form class="settings-form" id="dataForm">
+                                <div class="form-group">
+                                    <label class="form-label">数据刷新间隔（秒）</label>
+                                    <input type="number" class="form-control" id="refreshInterval" min="1" max="60" placeholder="建议设置在5-30秒之间">
+                                    <small class="form-hint">页面数据自动刷新的时间间隔</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">数据保存天数</label>
+                                    <input type="number" class="form-control" id="dataSaveDays" min="7" max="365" placeholder="建议设置在30-180天之间">
+                                    <small class="form-hint">系统将保存此天数内的基础数据</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-all"></i> 保存设置</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <nav class="navigation">
+            <a href="index.html" class="nav-item">仪表盘</a>
+            <a href="detail.html" class="nav-item">老人详情</a>
+            <a href="video.html" class="nav-item">视频监控</a>
+            <a href="settings.html" class="nav-item active">系统设置</a>
+        </nav>
+    </div>
+    
+    <!-- 模态窗口 - 老人添加/编辑 -->
+    <div class="modal" id="elderly-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加老人</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="elderlyForm">
+                    <input type="hidden" id="elderlyId">
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyName">姓名</label>
+                        <input type="text" class="form-control" id="elderlyName" required placeholder="请输入老人姓名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyAge">年龄</label>
+                        <input type="number" class="form-control" id="elderlyAge" min="60" max="120" required placeholder="请输入老人年龄">
+                        <small class="form-hint">年龄范围：60-120岁</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyRoom">房间号</label>
+                        <input type="text" class="form-control" id="elderlyRoom" required placeholder="请输入房间号">
+                        <small class="form-hint">例如：301</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger">取消</button>
+                <button class="btn btn-primary btn-submit" form="elderlyForm">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 模态窗口 - 联系人添加/编辑 -->
+    <div class="modal" id="contact-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加联系人</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <input type="hidden" id="contactId">
+                    <div class="form-group">
+                        <label class="form-label" for="contactName">姓名</label>
+                        <input type="text" class="form-control" id="contactName" required placeholder="请输入联系人姓名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="contactRelation">关系</label>
+                        <input type="text" class="form-control" id="contactRelation" required placeholder="与老人的关系">
+                        <small class="form-hint">例如：儿子、女儿、孙子等</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="contactPhone">联系电话</label>
+                        <input type="tel" class="form-control" id="contactPhone" pattern="[0-9]{11}" required placeholder="请输入11位手机号码">
+                        <small class="form-hint">格式：11位手机号码</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger">取消</button>
+                <button class="btn btn-primary btn-submit" form="contactForm">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/common.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html> 

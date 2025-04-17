@@ -1,0 +1,431 @@
+/* 视频监控页面样式 */
+
+:root {
+    --primary-color: #1890ff;
+    --primary-hover: #40a9ff;
+    --success-color: #52c41a;
+    --warning-color: #faad14;
+    --danger-color: #f5222d;
+    --text-color: #333;
+    --text-secondary: #666;
+    --text-light: #999;
+    --border-color: #e8e8e8;
+    --background-color: #f0f2f5;
+    --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+/* 返回链接 */
+.back-link {
+    margin: 10px 0;
+    padding: 5px 10px;
+}
+
+.back-link a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+
+/* 视频容器布局 */
+.video-container {
+    display: grid;
+    grid-template-columns: 250px 1fr 250px;
+    grid-template-rows: auto;
+    gap: 15px;
+    height: calc(100vh - 200px);
+}
+
+/* 控制面板 */
+.control-panel {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background-color: var(--panel-bg);
+    border-radius: 8px;
+}
+
+.control-item {
+    margin-bottom: 15px;
+}
+
+.control-item label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+.control-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* 视频主面板 */
+.video-main-panel {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--panel-bg);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.video-header h2 {
+    margin: 0;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.video-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-badge.online {
+    background-color: rgba(0, 128, 0, 0.2);
+    color: #00c853;
+}
+
+.status-badge.offline {
+    background-color: rgba(128, 0, 0, 0.2);
+    color: #ff5252;
+}
+
+.resolution-info {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.video-player-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.video-player {
+    flex: 1;
+    position: relative;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-stream {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.video-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #555;
+}
+
+.video-placeholder i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.video-placeholder p {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.video-feed {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.connecting-indicator {
+    color: white;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+}
+
+.video-timestamp {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.recording-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.video-controls {
+    display: flex;
+    padding: 10px 15px;
+    background-color: rgba(0, 0, 0, 0.2);
+    align-items: center;
+    gap: 15px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.control-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+.volume-control i {
+    font-size: 16px;
+}
+
+.volume-control input {
+    width: 80px;
+}
+
+/* 侧边面板 */
+.video-side-panel {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--panel-bg);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.side-panel-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.side-panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.camera-status {
+    padding: 15px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.status-value {
+    font-weight: 600;
+}
+
+.status-value.online {
+    color: #00c853;
+}
+
+.recording-list {
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.recording-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.recording-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.recording-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.recording-info i {
+    font-size: 16px;
+    color: var(--accent-color);
+}
+
+.recording-title {
+    font-size: 14px;
+}
+
+.recording-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-small {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-small:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.no-recordings {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* 截图效果 */
+.snapshot-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.snapshot-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: rgba(0, 128, 0, 0.9);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    z-index: 9999;
+    transition: opacity 0.3s;
+}
+
+/* 响应式布局 */
+@media (max-width: 1200px) {
+    .video-container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+    
+    .control-panel {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    
+    .video-main-panel {
+        grid-column: 1;
+        grid-row: 2;
+        height: 60vh;
+    }
+    
+    .video-side-panel {
+        grid-column: 1;
+        grid-row: 3;
+    }
+} 

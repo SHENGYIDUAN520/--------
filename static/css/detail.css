@@ -23,12 +23,11 @@
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
     grid-gap: 20px;
     grid-template-areas:
         "basic-info monitor"
-        "health-data activity"
-        "alerts trend";
+        "activity alerts";
 }
 
 /* 面板定位 */
@@ -40,20 +39,12 @@
     grid-area: monitor;
 }
 
-.health-data {
-    grid-area: health-data;
-}
-
 .activity-panel {
     grid-area: activity;
 }
 
 .alert-records {
     grid-area: alerts;
-}
-
-.trend-chart {
-    grid-area: trend;
 }
 
 /* 信息内容样式 */
@@ -153,12 +144,6 @@
     color: var(--accent-red);
 }
 
-/* 健康趋势图样式 */
-#health-trend-chart {
-    width: 100%;
-    height: 250px;
-}
-
 /* 响应式设计 */
 @media screen and (max-width: 992px) {
     .detail-grid {
@@ -166,9 +151,7 @@
         grid-template-areas:
             "basic-info"
             "monitor"
-            "health-data"
             "activity"
-            "alerts"
-            "trend";
+            "alerts";
     }
 } 
