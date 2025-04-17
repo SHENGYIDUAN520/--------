@@ -8,12 +8,17 @@ from datetime import datetime, timedelta
 # 用户相关API
 def get_user_by_username(username):
     """根据用户名获取用户信息"""
-    sql = "SELECT id, username, role, email, phone FROM users WHERE username = %s"
+    sql = "SELECT id, username, role, email, phone, real_name FROM users WHERE username = %s"
     return get_one(sql, (username,))
+
+def get_user_by_email(email):
+    """根据邮箱获取用户信息"""
+    sql = "SELECT id, username, role, email, phone FROM users WHERE email = %s"
+    return get_one(sql, (email,))
 
 def get_user_by_id(user_id):
     """根据ID获取用户信息"""
-    sql = "SELECT id, username, role, email, phone FROM users WHERE id = %s"
+    sql = "SELECT id, username, role, email, phone, real_name, last_login, login_count FROM users WHERE id = %s"
     return get_one(sql, (user_id,))
 
 def verify_user_password(username, password_hash):
@@ -21,34 +26,97 @@ def verify_user_password(username, password_hash):
     sql = "SELECT id FROM users WHERE username = %s AND password = %s"
     return get_one(sql, (username, password_hash))
 
-def update_user_profile(user_id, email=None, phone=None):
+def update_user_profile(user_id, email=None, phone=None, real_name=None):
     """更新用户个人资料"""
-    if email and phone:
-        sql = "UPDATE users SET email = %s, phone = %s WHERE id = %s"
-        return update(sql, (email, phone, user_id))
-    elif email:
-        sql = "UPDATE users SET email = %s WHERE id = %s"
-        return update(sql, (email, user_id))
-    elif phone:
-        sql = "UPDATE users SET phone = %s WHERE id = %s"
-        return update(sql, (phone, user_id))
-    return False
+    update_fields = []
+    params = []
+    
+    if email:
+        update_fields.append("email = %s")
+        params.append(email)
+    if phone:
+        update_fields.append("phone = %s")
+        params.append(phone)
+    if real_name:
+        update_fields.append("real_name = %s")
+        params.append(real_name)
+    
+    if not update_fields:
+        return False
+    
+    # 添加ID作为WHERE条件
+    params.append(user_id)
+    
+    sql = f"UPDATE users SET {', '.join(update_fields)} WHERE id = %s"
+    return update(sql, params)
 
 def update_user_password(user_id, new_password_hash):
     """更新用户密码"""
     sql = "UPDATE users SET password = %s WHERE id = %s"
     return update(sql, (new_password_hash, user_id))
 
+def create_user(username, password_hash, email=None, phone=None, role='staff', real_name=None):
+    """创建新用户"""
+    sql = """
+        INSERT INTO users (username, password, email, phone, role, real_name)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    return insert(sql, (username, password_hash, email, phone, role, real_name))
+
+def check_username_exists(username):
+    """检查用户名是否已存在"""
+    sql = "SELECT COUNT(*) as count FROM users WHERE username = %s"
+    result = get_one(sql, (username,))
+    return result and result['count'] > 0
+
+def check_email_exists(email):
+    """检查邮箱是否已存在"""
+    if not email:
+        return False
+    sql = "SELECT COUNT(*) as count FROM users WHERE email = %s"
+    result = get_one(sql, (email,))
+    return result and result['count'] > 0
+
+def update_login_info(user_id):
+    """更新用户登录信息"""
+    sql = """
+        UPDATE users 
+        SET last_login = NOW(), login_count = login_count + 1
+        WHERE id = %s
+    """
+    return update(sql, (user_id,))
+
 def delete_all_user_sessions(user_id):
     """删除用户的所有会话"""
     sql = "DELETE FROM sessions WHERE user_id = %s"
     return update(sql, (user_id,))
 
+def get_all_users(limit=100, offset=0):
+    """获取所有用户"""
+    sql = """
+        SELECT id, username, role, email, phone, real_name, last_login, login_count, status, created_at
+        FROM users
+        ORDER BY id ASC
+        LIMIT %s OFFSET %s
+    """
+    return query(sql, (limit, offset))
+
+def count_users():
+    """获取用户总数"""
+    sql = "SELECT COUNT(*) as count FROM users"
+    result = get_one(sql)
+    return result['count'] if result else 0
+
+def update_user_status(user_id, status):
+    """更新用户状态"""
+    sql = "UPDATE users SET status = %s WHERE id = %s"
+    return update(sql, (status, user_id))
+
 # 老人信息相关API
 def get_all_seniors():
     """获取所有老人信息"""
     sql = """
-        SELECT id, name, age, gender, room_id, emergency_contact, emergency_phone 
+        SELECT id, name, age, gender, emergency_contact, emergency_phone 
         FROM seniors
     """
     return query(sql)
@@ -56,23 +124,23 @@ def get_all_seniors():
 def get_senior_by_id(senior_id):
     """根据ID获取老人详细信息"""
     sql = """
-        SELECT id, name, age, gender, address, room_id, emergency_contact, 
-               emergency_phone, health_notes 
+        SELECT id, name, age, gender, address, emergency_contact, 
+               emergency_phone
         FROM seniors 
         WHERE id = %s
     """
     return get_one(sql, (senior_id,))
 
-def add_senior(name, age, gender=None, address=None, room_id=None, 
-               emergency_contact=None, emergency_phone=None, health_notes=None):
+def add_senior(name, age, gender=None, address=None, 
+               emergency_contact=None, emergency_phone=None):
     """添加老人信息"""
     sql = """
-        INSERT INTO seniors (name, age, gender, address, room_id, emergency_contact, 
-                            emergency_phone, health_notes)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO seniors (name, age, gender, address, emergency_contact, 
+                            emergency_phone)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """
-    return insert(sql, (name, age, gender, address, room_id, emergency_contact, 
-                        emergency_phone, health_notes))
+    return insert(sql, (name, age, gender, address, emergency_contact, 
+                        emergency_phone))
 
 def update_senior(senior_id, **kwargs):
     """更新老人信息"""
@@ -99,7 +167,7 @@ def delete_senior(senior_id):
 def get_all_cameras():
     """获取所有摄像头信息"""
     sql = """
-        SELECT id, device_id, name, location, room_id, stream_url, k230_ip, 
+        SELECT id, device_id, name, location, stream_url, k230_ip, 
                resolution, fps, status 
         FROM cameras
     """
@@ -108,22 +176,12 @@ def get_all_cameras():
 def get_camera_by_id(camera_id):
     """根据ID获取摄像头详细信息"""
     sql = """
-        SELECT id, device_id, name, location, room_id, stream_url, k230_ip, 
+        SELECT id, device_id, name, location, stream_url, k230_ip, 
                resolution, fps, status 
         FROM cameras 
         WHERE id = %s
     """
     return get_one(sql, (camera_id,))
-
-def get_camera_by_room(room_id):
-    """根据房间ID获取摄像头信息"""
-    sql = """
-        SELECT id, device_id, name, location, room_id, stream_url, k230_ip, 
-               resolution, fps, status 
-        FROM cameras 
-        WHERE room_id = %s
-    """
-    return query(sql, (room_id,))
 
 def update_camera_status(camera_id, status):
     """更新摄像头状态"""
@@ -158,7 +216,7 @@ def get_recent_alarms(limit=10):
     sql = """
         SELECT a.id, a.event_type, a.event_level, a.description, 
                a.image_url, a.video_clip_url, a.status, a.created_at,
-               s.name as senior_name, s.age as senior_age, s.room_id
+               s.name as senior_name, s.age as senior_age
         FROM alarm_events a
         LEFT JOIN seniors s ON a.senior_id = s.id
         ORDER BY a.created_at DESC
@@ -219,7 +277,7 @@ def add_alarm_event(senior_id, camera_id, event_type, event_level,
     if alarm_id:
         # 获取完整的报警信息用于缓存
         alarm_data = get_one("""
-            SELECT a.*, s.name as senior_name, s.age as senior_age, s.room_id
+            SELECT a.*, s.name as senior_name, s.age as senior_age
             FROM alarm_events a
             LEFT JOIN seniors s ON a.senior_id = s.id
             WHERE a.id = %s

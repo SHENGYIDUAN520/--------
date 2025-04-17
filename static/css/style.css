@@ -1,8 +1,62 @@
+/* 全局样式 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Microsoft YaHei', sans-serif;
+}
+
+body {
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+a {
+    text-decoration: none;
+    color: #1976d2;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* 通用组件样式 */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #1565c0;
+}
+
+.btn-primary {
+    background-color: #1976d2;
+}
+
+.btn-success {
+    background-color: #4caf50;
+}
+
+.btn-danger {
+    background-color: #f44336;
+}
+
+.btn-warning {
+    background-color: #ff9800;
 }
 
 :root {
@@ -24,12 +78,6 @@ body {
     color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
-}
-
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
 }
 
 /* 头部样式 */

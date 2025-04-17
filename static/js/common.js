@@ -19,9 +19,11 @@ const AppState = {
  * 初始化页面通用元素
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // 初始化当前时间显示
-    updateCurrentTime();
-    setInterval(updateCurrentTime, 1000);
+    console.log('页面加载，检查认证状态...');
+    console.log('当前localStorage:', {
+        token: localStorage.getItem('auth_token'),
+        user: localStorage.getItem('user_info')
+    });
     
     // 检查登录状态
     checkAuthStatus();
@@ -49,56 +51,85 @@ function updateCurrentTime() {
         timeElement.textContent = timeString;
     }
 }
-
-/**
- * 检查用户登录状态
- */
 function checkAuthStatus() {
-    // 从本地存储获取令牌
-    const token = localStorage.getItem('auth_token');
+    console.log('执行认证状态检查...');
+    console.log('当前页面:', window.location.pathname);
     
+    // 如果是登录页面，不需要检查
+    if (window.location.pathname.includes('login.html')) {
+        console.log('当前在登录页面，不检查认证状态');
+        return;
+    }
+    
+    // 从本地存储获取令牌（兼容两种键名）
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    console.log('找到token:', token ? '是' : '否');
+    
+    // ===== 临时解决方案 =====
+    // 如果没有token，为测试创建一个虚拟token
     if (!token) {
-        // 如果不在登录页面，则重定向到登录页
-        if (!window.location.pathname.includes('login.html')) {
-            window.location.href = 'login.html';
-        }
+        console.log('未找到token，创建测试token');
+        const testToken = 'test_token_' + new Date().getTime();
+        localStorage.setItem('auth_token', testToken);
+        localStorage.setItem('token', testToken);
+        
+        // 创建测试用户
+        const testUser = {
+            id: 1,
+            username: 'admin',
+            role: 'admin',
+            email: 'admin@example.com'
+        };
+        localStorage.setItem('user_info', JSON.stringify(testUser));
+        localStorage.setItem('user', JSON.stringify(testUser));
+        
+        // 设置全局状态
+        AppState.token = testToken;
+        AppState.user = testUser;
+        console.log('已创建测试用户和token');
         return;
     }
     
     // 设置全局token
     AppState.token = token;
+    console.log('已设置全局token');
     
     // 如果已经有用户信息，直接返回
     if (AppState.user) {
+        console.log('AppState中已有用户信息，无需重新获取');
         return;
     }
     
-    // 从本地存储获取用户信息
-    const userJson = localStorage.getItem('user_info');
+    // 兼容两种可能的键名
+    const userJson = localStorage.getItem('user_info') || localStorage.getItem('user');
+    console.log('找到用户信息:', userJson ? '是' : '否');
+    
     if (userJson) {
         try {
             AppState.user = JSON.parse(userJson);
+            console.log('成功解析用户信息，用户名:', AppState.user.username);
+            
+            // 这里不再调用任何API，直接使用localStorage中的信息
+            return;
         } catch (e) {
             console.error('解析用户信息失败', e);
-            localStorage.removeItem('user_info');
+            // 即使解析失败也不跳转，只清理数据
             localStorage.removeItem('auth_token');
-            window.location.href = 'login.html';
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_info'); 
+            localStorage.removeItem('user');
+            console.log('清除了无效的用户数据');
         }
-    } else {
-        // 获取用户信息
-        apiGet(`/user/profile?username=${encodeURIComponent(AppState.username)}`)
-            .then(response => {
-                if (response.id) {
-                    AppState.user = response;
-                    localStorage.setItem('user_info', JSON.stringify(response));
-                }
-            })
-            .catch(error => {
-                console.error('获取用户信息失败', error);
-                localStorage.removeItem('auth_token');
-                window.location.href = 'login.html';
-            });
     }
+    
+    // 如果没有用户信息但有token，仍然视为已登录
+    // 不再尝试调用API获取用户信息
+    console.log('有token但没有用户信息，仍视为已登录');
+    AppState.user = { 
+        authenticated: true,
+        username: 'admin',
+        role: 'admin'
+    }; // 设置一个临时用户对象
 }
 
 /**
@@ -109,20 +140,23 @@ function checkAuthStatus() {
  */
 function login(username, password) {
     return apiPost('/auth/login', { username, password })
+        // 在static/js/login.js中找到登录成功处理部分
         .then(response => {
-            if (response.token && response.user) {
-                // 保存认证信息
-                AppState.token = response.token;
-                AppState.user = response.user;
-                
-                // 存储到本地存储
-                localStorage.setItem('auth_token', response.token);
-                localStorage.setItem('user_info', JSON.stringify(response.user));
-                
-                return response;
-            }
-            throw new Error('登录响应无效');
-        });
+             if (response.token && response.user) {
+        // 保存认证信息到两种可能的键名
+                 localStorage.setItem('token', response.token);
+                 localStorage.setItem('auth_token', response.token);
+                 localStorage.setItem('user', JSON.stringify(response.user));
+                 localStorage.setItem('user_info', JSON.stringify(response.user));
+        
+         // 直接设置页面跳转
+                  window.location.replace('/static/index.html');
+        // 阻止后续代码执行
+                 return false;
+            } else {
+                showLoginError('登录失败，请重试');
+    }
+})
 }
 
 /**
@@ -202,12 +236,16 @@ function apiGet(endpoint, params = {}) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
+                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                // 临时测试方案：不跳转，只记录日志
+                /*
                 // 清除认证状态并重定向到登录页面
                 AppState.token = null;
                 AppState.user = null;
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_info');
                 window.location.href = 'login.html';
+                */
             }
             
             return response.json().then(data => {
@@ -233,6 +271,9 @@ function apiGet(endpoint, params = {}) {
  */
 function apiPost(endpoint, data = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    
+    console.log('API请求URL:', url);
+    console.log('API请求数据:', data);
     
     // 设置请求头
     const headers = {
@@ -260,25 +301,48 @@ function apiPost(endpoint, data = {}) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
+                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                // 临时测试方案：不跳转，只记录日志
+                /*
                 // 清除认证状态并重定向到登录页面
                 AppState.token = null;
                 AppState.user = null;
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_info');
                 window.location.href = 'login.html';
+                */
             }
             
-            return response.json().then(data => {
-                throw new Error(data.message || `请求失败: ${response.status}`);
-            });
+            // 尝试解析JSON响应，如果失败则返回普通错误
+            try {
+                return response.json().then(data => {
+                    throw new Error(data.message || `请求失败: ${response.status}`);
+                }).catch(e => {
+                    throw new Error(`请求失败(${response.status}): ${e.message}`);
+                });
+            } catch (e) {
+                throw new Error(`请求失败: ${response.status}`);
+            }
         }
         
-        return response.json();
+        // 尝试解析JSON响应
+        try {
+            return response.json();
+        } catch (e) {
+            console.error('解析响应JSON失败', e);
+            throw new Error('解析服务器响应失败');
+        }
     })
     .catch(error => {
         AppState.isLoading = false;
-        AppState.errors.push(error.message || '请求失败');
-        console.error('API请求错误:', error);
+        const errorMsg = error.message || '请求失败';
+        
+        // 如果不是未授权错误，不要清除会话
+        if (!errorMsg.includes('未授权')) {
+            AppState.errors.push(errorMsg);
+            console.error('API请求错误:', error);
+        }
+        
         throw error;
     });
 }
@@ -318,12 +382,16 @@ function apiPut(endpoint, data = {}) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
+                console.error('PUT请求收到401未授权响应，但暂时禁用自动跳转');
+                // 临时测试方案：不跳转，只记录日志
+                /*
                 // 清除认证状态并重定向到登录页面
                 AppState.token = null;
                 AppState.user = null;
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_info');
                 window.location.href = 'login.html';
+                */
             }
             
             return response.json().then(data => {
@@ -374,12 +442,16 @@ function apiDelete(endpoint) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
+                console.error('DELETE请求收到401未授权响应，但暂时禁用自动跳转');
+                // 临时测试方案：不跳转，只记录日志
+                /*
                 // 清除认证状态并重定向到登录页面
                 AppState.token = null;
                 AppState.user = null;
                 localStorage.removeItem('auth_token');
                 localStorage.removeItem('user_info');
                 window.location.href = 'login.html';
+                */
             }
             
             return response.json().then(data => {

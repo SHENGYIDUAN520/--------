@@ -16,16 +16,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // 模拟紧急报警（5秒后触发一次）
     setTimeout(showAlertModal, 5000);
     
-    // 检查登录状态
-    checkLoginStatus();
+    // 检查登录状态已由common.js处理，此处不再重复检查
+    // checkLoginStatus();
 });
 
-// 检查登录状态
+// 检查登录状态 - 保留但不再调用此函数
 function checkLoginStatus() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-        // 未登录，跳转到登录页
+    // 使用与common.js一致的令牌检查逻辑
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    
+    // 只要有token就认为已登录
+    if (!token) {
+        console.log('main.js: 未检测到token，跳转到登录页');
         window.location.href = 'login.html';
+    } else {
+        console.log('main.js: 检测到token，用户已登录');
+        // 设置isLoggedIn标志，便于其他代码检查
+        localStorage.setItem('isLoggedIn', 'true');
     }
 }
 

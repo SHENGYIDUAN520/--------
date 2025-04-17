@@ -20,31 +20,47 @@ body {
     background: rgba(10, 25, 41, 0.8);
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    padding: 40px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.login-form h1 {
+.login-panel {
+    padding: 40px;
+}
+
+.login-header {
     text-align: center;
-    color: #FFFFFF;
     margin-bottom: 30px;
+}
+
+.login-header h1 {
+    color: #FFFFFF;
     font-size: 24px;
+    margin-bottom: 10px;
     letter-spacing: 1px;
 }
 
-.input-group {
+.login-header p {
+    color: #66B2FF;
+    font-size: 16px;
+}
+
+.login-form {
+    margin-bottom: 30px;
+}
+
+.form-group {
     margin-bottom: 25px;
 }
 
-.input-group label {
+.form-group label {
     display: block;
     color: #66B2FF;
     margin-bottom: 8px;
     font-size: 14px;
 }
 
-.input-group input {
+.form-group input {
     width: 100%;
     padding: 12px 15px;
     background: rgba(255, 255, 255, 0.05);
@@ -56,33 +72,33 @@ body {
     transition: all 0.3s;
 }
 
-.input-group input:focus {
+.form-group input:focus {
     border-color: #66B2FF;
     box-shadow: 0 0 8px rgba(102, 178, 255, 0.5);
 }
 
-.input-group input::placeholder {
+.form-group input::placeholder {
     color: rgba(255, 255, 255, 0.3);
 }
 
-.remember-forgot {
+.form-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 25px;
 }
 
-.remember {
+.remember-me {
     display: flex;
     align-items: center;
 }
 
-.remember input {
+.remember-me input {
     margin-right: 8px;
     cursor: pointer;
 }
 
-.remember label {
+.remember-me label {
     color: #FFFFFF;
     font-size: 14px;
     cursor: pointer;
@@ -98,28 +114,100 @@ body {
     text-decoration: underline;
 }
 
-.login-btn {
-    width: 100%;
+.btn {
     padding: 12px;
-    background: linear-gradient(to right, #2196F3, #4CAF50);
     border: none;
     border-radius: 5px;
-    color: #FFFFFF;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s;
 }
 
-.login-btn:hover {
+.btn-primary {
+    background: linear-gradient(to right, #2196F3, #4CAF50);
+    color: #FFFFFF;
+}
+
+.btn-primary:hover {
     background: linear-gradient(to right, #1976D2, #388E3C);
     box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+}
+
+.btn-block {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-block i {
+    margin-right: 8px;
+}
+
+.error-message {
+    background-color: rgba(244, 67, 54, 0.2);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #f44336;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.success-message {
+    background-color: rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    color: #4CAF50;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.login-footer p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.version {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.register-link {
+    text-align: center;
+    margin-top: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+}
+
+.register-link a {
+    color: #66B2FF;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register-link a:hover {
+    text-decoration: underline;
 }
 
 /* 响应式设计 */
 @media screen and (max-width: 480px) {
     .login-container {
         width: 90%;
+    }
+    
+    .login-panel {
         padding: 30px;
     }
 }

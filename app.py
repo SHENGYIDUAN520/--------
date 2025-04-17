@@ -134,6 +134,65 @@ def login():
         print(f"登录验证错误: {e}")
         return jsonify({'message': '登录失败，系统错误'}), 500
 
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    confirm_password = data.get('confirm_password')
+    email = data.get('email')
+    phone = data.get('phone')
+    real_name = data.get('real_name')
+    
+    # 表单验证
+    if not username or not password:
+        return jsonify({'message': '用户名和密码不能为空'}), 400
+    
+    if confirm_password and password != confirm_password:
+        return jsonify({'message': '两次输入的密码不一致'}), 400
+    
+    if len(password) < 6:
+        return jsonify({'message': '密码长度不能少于6个字符'}), 400
+    
+    # 检查用户名是否已存在
+    if api.check_username_exists(username):
+        return jsonify({'message': '该用户名已被注册'}), 409
+    
+    # 如果提供了邮箱，检查邮箱是否已存在
+    if email and api.check_email_exists(email):
+        return jsonify({'message': '该邮箱已被注册'}), 409
+    
+    try:
+        # 密码哈希处理
+        password_hash = hashlib.pbkdf2_hmac(
+            'sha256', 
+            password.encode('utf-8'), 
+            username.encode('utf-8'), 
+            10000
+        ).hex()
+        
+        # 在创建用户前确保role值有效
+        role = 'staff'  # 默认为staff
+        
+        # 创建用户
+        user_id = api.create_user(username, password_hash, email, phone, role, real_name)
+        
+        if user_id:
+            # 记录注册日志
+            print(f"新用户注册成功: {username}, ID: {user_id}")
+            
+            return jsonify({
+                'message': '注册成功',
+                'user_id': user_id,
+                'username': username
+            }), 201
+        else:
+            return jsonify({'message': '注册失败，请稍后再试'}), 500
+    
+    except Exception as e:
+        print(f"用户注册错误: {e}")
+        return jsonify({'message': f'注册失败，系统错误: {str(e)}'}), 500
+
 @app.route('/api/auth/logout', methods=['POST'])
 @token_required
 def logout():
@@ -263,14 +322,12 @@ def add_senior():
     # 可选字段
     gender = data.get('gender')
     address = data.get('address')
-    room_id = data.get('room_id')
     emergency_contact = data.get('emergency_contact')
     emergency_phone = data.get('emergency_phone')
-    health_notes = data.get('health_notes')
     
     senior_id = api.add_senior(
-        name, age, gender, address, room_id, 
-        emergency_contact, emergency_phone, health_notes
+        name, age, gender, address,
+        emergency_contact, emergency_phone
     )
     
     if senior_id:
@@ -292,8 +349,8 @@ def update_senior(senior_id):
         return jsonify({'message': '老人信息不存在'}), 404
     
     # 可更新字段
-    fields = ['name', 'age', 'gender', 'address', 'room_id', 
-              'emergency_contact', 'emergency_phone', 'health_notes']
+    fields = ['name', 'age', 'gender', 'address',
+              'emergency_contact', 'emergency_phone']
     
     # 提取要更新的字段
     update_data = {k: v for k, v in data.items() if k in fields and v is not None}
@@ -339,12 +396,6 @@ def get_camera(camera_id):
         return jsonify({'message': '摄像头不存在'}), 404
     
     return jsonify(camera)
-
-@app.route('/api/rooms/<room_id>/cameras', methods=['GET'])
-@token_required
-def get_room_cameras(room_id):
-    cameras = api.get_camera_by_room(room_id)
-    return jsonify(cameras)
 
 @app.route('/api/cameras/<int:camera_id>/status', methods=['PUT'])
 @token_required

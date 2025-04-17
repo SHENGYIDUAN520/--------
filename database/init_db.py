@@ -1,5 +1,10 @@
 import pymysql
 import os
+import sys
+
+# 添加项目根目录到Python路径
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from database.config import MYSQL_CONFIG
 
 def create_database():
@@ -22,7 +27,7 @@ def create_database():
             # 切换到新数据库
             cursor.execute(f"USE {MYSQL_CONFIG['database']}")
             
-            # 创建用户表
+            # 创建用户表 - 更新字段以支持注册功能
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -31,9 +36,15 @@ def create_database():
                     role ENUM('admin', 'staff', 'family') NOT NULL DEFAULT 'staff',
                     email VARCHAR(128),
                     phone VARCHAR(20),
-                    status TINYINT DEFAULT 1,
+                    real_name VARCHAR(64),
+                    avatar_url VARCHAR(256),
+                    last_login TIMESTAMP,
+                    login_count INT DEFAULT 0,
+                    status TINYINT DEFAULT 1 COMMENT '1: 正常, 0: 禁用',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    INDEX idx_username (username),
+                    INDEX idx_email (email)
                 )
             """)
             print("用户表创建成功")
@@ -46,10 +57,8 @@ def create_database():
                     age INT,
                     gender ENUM('male', 'female', 'other'),
                     address VARCHAR(256),
-                    room_id VARCHAR(64),
                     emergency_contact VARCHAR(64),
                     emergency_phone VARCHAR(20),
-                    health_notes TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                 )
@@ -63,7 +72,6 @@ def create_database():
                     device_id VARCHAR(64) NOT NULL UNIQUE,
                     name VARCHAR(64),
                     location VARCHAR(128),
-                    room_id VARCHAR(64),
                     stream_url VARCHAR(256),
                     k230_ip VARCHAR(64),
                     resolution VARCHAR(32),

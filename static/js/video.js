@@ -15,7 +15,6 @@ const btnStopRecording = document.getElementById('btn-stop-recording');
 const btnSnapshot = document.getElementById('btn-snapshot');
 const btnFullscreen = document.getElementById('btn-fullscreen');
 const statusBadge = document.querySelector('.status-badge');
-const roomSelect = document.getElementById('room-select');
 
 // 初始化函数
 function initVideoPage() {
@@ -29,7 +28,6 @@ function initVideoPage() {
     btnStopRecording.addEventListener('click', stopRecording);
     btnSnapshot.addEventListener('click', takeSnapshot);
     btnFullscreen.addEventListener('click', toggleFullscreen);
-    roomSelect.addEventListener('change', updateRoomInfo);
     
     // 检查录制状态
     checkRecordingStatus();
@@ -352,12 +350,6 @@ function updateRecordingsList() {
             console.error('获取录像列表错误:', error);
             recordingList.innerHTML = '<div class="no-recordings">获取录像失败</div>';
         });
-}
-
-// 更新房间信息
-function updateRoomInfo() {
-    const selectedRoom = roomSelect.options[roomSelect.selectedIndex].text;
-    document.querySelector('.video-header h2').textContent = `实时监控 - ${selectedRoom}`;
 }
 
 // 页面加载时初始化

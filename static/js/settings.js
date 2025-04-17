@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('设置页面加载...');
+    
     // 更新当前时间
     updateCurrentTime();
     setInterval(updateCurrentTime, 1000);
@@ -7,13 +9,34 @@ document.addEventListener('DOMContentLoaded', function() {
     initTabSwitching();
     
     // 表单处理
-    initForms();
+    setTimeout(() => {
+        try {
+            console.log('初始化表单...');
+            initForms();
+        } catch (e) {
+            console.error('初始化表单失败:', e);
+        }
+    }, 500);
     
     // 模态窗口处理
-    initModals();
+    setTimeout(() => {
+        try {
+            console.log('初始化模态窗口...');
+            initModals();
+        } catch (e) {
+            console.error('初始化模态窗口失败:', e);
+        }
+    }, 1000);
     
-    // 列表处理
-    initListActions();
+    // 列表处理 - 最后延迟加载
+    setTimeout(() => {
+        try {
+            console.log('初始化列表操作...');
+            initListActions();
+        } catch (e) {
+            console.error('初始化列表操作失败:', e);
+        }
+    }, 1500);
 });
 
 // 更新当前时间
@@ -71,9 +94,32 @@ function initForms() {
     // 个人信息表单提交
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
+        // 加载用户信息
+        loadUserProfile();
+        
         profileForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            showToast('个人信息已更新', 'success');
+            
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            
+            // 使用API更新用户信息
+            apiPut('/user/profile', {
+                email: email,
+                phone: phone
+            })
+            .then(response => {
+                showToast('个人信息已更新', 'success');
+                
+                // 更新本地存储的用户信息
+                const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+                userInfo.email = email;
+                userInfo.phone = phone;
+                localStorage.setItem('user_info', JSON.stringify(userInfo));
+            })
+            .catch(error => {
+                showToast(`更新失败: ${error.message}`, 'error');
+            });
         });
     }
     
@@ -82,6 +128,7 @@ function initForms() {
     if (passwordForm) {
         passwordForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             
@@ -97,8 +144,23 @@ function initForms() {
                 return;
             }
             
-            showToast('密码已成功更新', 'success');
-            this.reset();
+            // 使用API更新密码
+            apiPut('/user/password', {
+                current_password: currentPassword,
+                new_password: newPassword
+            })
+            .then(response => {
+                showToast('密码已成功更新，请重新登录', 'success');
+                this.reset();
+                
+                // 2秒后退出登录
+                setTimeout(() => {
+                    logout();
+                }, 2000);
+            })
+            .catch(error => {
+                showToast(`密码更新失败: ${error.message}`, 'error');
+            });
         });
     }
     
@@ -118,6 +180,60 @@ function initForms() {
             e.preventDefault();
             showToast('数据设置已保存', 'success');
         });
+    }
+}
+
+// 加载用户个人资料
+function loadUserProfile() {
+    const username = document.getElementById('username');
+    const email = document.getElementById('email');
+    const phone = document.getElementById('phone');
+    
+    if (!username || !email || !phone) return;
+    
+    // 从本地存储获取用户信息
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+        
+        if (userInfo && userInfo.username) {
+            username.value = userInfo.username;
+            
+            // 先填充本地存储的信息作为备选
+            email.value = userInfo.email || '';
+            phone.value = userInfo.phone || '';
+            
+            // 从API获取最新的用户信息
+            apiGet('/user/profile', { username: userInfo.username })
+                .then(response => {
+                    if (response && response.email !== undefined) {
+                        email.value = response.email || '';
+                    }
+                    if (response && response.phone !== undefined) {
+                        phone.value = response.phone || '';
+                    }
+                    
+                    // 更新本地存储的用户信息
+                    if (response) {
+                        userInfo.email = response.email || userInfo.email;
+                        userInfo.phone = response.phone || userInfo.phone;
+                        localStorage.setItem('user_info', JSON.stringify(userInfo));
+                    }
+                })
+                .catch(error => {
+                    console.error('获取用户信息失败:', error);
+                    // 已经使用了本地存储的信息作为备选，不需要额外处理
+                });
+        } else {
+            // 没有用户信息，显示默认提示
+            username.value = '未登录';
+            email.value = '';
+            phone.value = '';
+        }
+    } catch (error) {
+        console.error('解析用户信息失败:', error);
+        username.value = '无效用户信息';
+        email.value = '';
+        phone.value = '';
     }
 }
 
@@ -250,11 +366,6 @@ function populateModalForm(modal, listItem) {
         if (ageMatch) {
             document.getElementById('elderlyAge').value = ageMatch[1];
         }
-        
-        const roomMatch = description.match(/房间：(\d+)/);
-        if (roomMatch) {
-            document.getElementById('elderlyRoom').value = roomMatch[1];
-        }
     } else if (modalId === 'contact-modal') {
         const title = listItem.querySelector('.item-title').textContent;
         const description = listItem.querySelector('.item-description').textContent;
@@ -278,172 +389,363 @@ function populateModalForm(modal, listItem) {
 
 // 保存老人数据
 function saveElderlyData(form) {
-    const id = document.getElementById('elderlyId').value;
+    const elderlyId = document.getElementById('elderlyId').value;
     const name = document.getElementById('elderlyName').value;
     const age = document.getElementById('elderlyAge').value;
-    const room = document.getElementById('elderlyRoom').value;
+    const gender = document.getElementById('elderlyGender').value;
+    const emergencyContact = document.getElementById('elderlyContact').value;
+    const emergencyPhone = document.getElementById('elderlyPhone').value;
     
-    // 如果是编辑现有数据
-    if (id) {
-        const listItem = document.querySelector(`.list-item[data-id="${id}"]`);
-        if (listItem) {
-            listItem.querySelector('.item-title').textContent = name;
-            listItem.querySelector('.item-description').textContent = `年龄：${age} | 房间：${room}`;
-            showToast('老人信息已更新', 'success');
-        }
+    // 准备API请求数据
+    const seniorData = {
+        name: name,
+        age: parseInt(age),
+        gender: gender,
+        emergency_contact: emergencyContact,
+        emergency_phone: emergencyPhone
+    };
+    
+    let apiPromise;
+    
+    if (elderlyId) {
+        // 更新现有老人信息
+        apiPromise = apiPut(`/seniors/${elderlyId}`, seniorData)
+            .then(response => {
+                showToast('老人信息已成功更新', 'success');
+                loadElderlyList(); // 重新加载老人列表
+            });
     } else {
-        // 添加新数据
-        const newId = Date.now().toString();
-        const elderlyList = document.querySelector('#elderly-tab .list-container');
-        
-        const newItem = document.createElement('div');
-        newItem.className = 'list-item';
-        newItem.setAttribute('data-id', newId);
-        newItem.innerHTML = `
-            <div class="item-info">
-                <h4 class="item-title">${name}</h4>
-                <p class="item-description">年龄：${age} | 房间：${room}</p>
-            </div>
-            <div class="item-actions">
-                <button class="btn btn-primary btn-edit" data-modal="elderly-modal">
-                    <i class="bi bi-pencil-square"></i> 编辑
-                </button>
-                <button class="btn btn-danger btn-delete">
-                    <i class="bi bi-trash"></i> 删除
-                </button>
-            </div>
-        `;
-        
-        elderlyList.appendChild(newItem);
-        
-        // 为新添加的按钮绑定事件
-        bindListItemEvents(newItem);
-        
-        showToast('新老人信息已添加', 'success');
+        // 添加新老人
+        apiPromise = apiPost('/seniors', seniorData)
+            .then(response => {
+                showToast('新老人信息已成功添加', 'success');
+                loadElderlyList(); // 重新加载老人列表
+            });
     }
+    
+    apiPromise.catch(error => {
+        showToast(`操作失败: ${error.message}`, 'error');
+    });
+}
+
+// 加载老人列表
+function loadElderlyList() {
+    const container = document.getElementById('elderly-data-container');
+    const loadingIndicator = document.querySelector('#elderly-list .loading-indicator');
+    const emptyState = document.querySelector('#elderly-list .empty-state');
+    
+    if (!container) return;
+    
+    // 显示加载指示器
+    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+    if (emptyState) emptyState.style.display = 'none';
+    container.innerHTML = '';
+    
+    // 从API获取老人列表
+    apiGet('/seniors')
+        .then(response => {
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            
+            if (!response || response.length === 0) {
+                // 显示空状态
+                if (emptyState) emptyState.style.display = 'flex';
+                return;
+            }
+            
+            // 渲染老人列表
+            response.forEach(senior => {
+                const listItem = document.createElement('div');
+                listItem.className = 'list-item';
+                listItem.setAttribute('data-id', senior.id);
+                
+                const genderIcon = senior.gender === 'male' ? 'bi-gender-male' : 'bi-gender-female';
+                const genderClass = senior.gender === 'male' ? 'male' : 'female';
+                
+                listItem.innerHTML = `
+                    <div class="item-content">
+                        <h4 class="item-title">
+                            <i class="bi ${genderIcon} ${genderClass}"></i> ${senior.name}
+                        </h4>
+                        <p class="item-description">
+                            年龄：${senior.age} | 
+                            紧急联系人：${senior.emergency_contact || '未设置'}
+                        </p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-icon btn-edit" title="编辑信息" data-modal="elderly-modal">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-icon btn-delete" title="删除">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(listItem);
+                bindListItemEvents(listItem);
+            });
+        })
+        .catch(error => {
+            console.error('获取老人列表失败:', error);
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            if (emptyState) {
+                emptyState.style.display = 'flex';
+                const emptyText = emptyState.querySelector('p');
+                if (emptyText) emptyText.textContent = '获取数据失败，请刷新重试';
+            }
+        });
+}
+
+// 删除老人信息
+function deleteElderly(id) {
+    if (!confirm('确定要删除这位老人的信息吗？此操作不可恢复。')) {
+        return;
+    }
+    
+    apiDelete(`/seniors/${id}`)
+        .then(response => {
+            showToast('老人信息已成功删除', 'success');
+            loadElderlyList(); // 重新加载老人列表
+        })
+        .catch(error => {
+            showToast(`删除失败: ${error.message}`, 'error');
+        });
 }
 
 // 保存联系人数据
 function saveContactData(form) {
-    const id = document.getElementById('contactId').value;
+    const contactId = document.getElementById('contactId').value;
     const name = document.getElementById('contactName').value;
     const relation = document.getElementById('contactRelation').value;
     const phone = document.getElementById('contactPhone').value;
+    const seniorId = document.getElementById('contactSeniorId').value;
     
-    // 隐藏部分电话号码
-    const maskedPhone = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-    
-    // 如果是编辑现有数据
-    if (id) {
-        const listItem = document.querySelector(`.list-item[data-id="${id}"]`);
-        if (listItem) {
-            listItem.querySelector('.item-title').textContent = name;
-            listItem.querySelector('.item-description').textContent = `关系：${relation} | 电话：${maskedPhone}`;
-            showToast('联系人信息已更新', 'success');
-        }
-    } else {
-        // 添加新数据
-        const newId = Date.now().toString();
-        const contactList = document.querySelector('#contact-tab .list-container');
-        
-        const newItem = document.createElement('div');
-        newItem.className = 'list-item';
-        newItem.setAttribute('data-id', newId);
-        newItem.innerHTML = `
-            <div class="item-info">
-                <h4 class="item-title">${name}</h4>
-                <p class="item-description">关系：${relation} | 电话：${maskedPhone}</p>
-            </div>
-            <div class="item-actions">
-                <button class="btn btn-primary btn-edit" data-modal="contact-modal">
-                    <i class="bi bi-pencil-square"></i> 编辑
-                </button>
-                <button class="btn btn-danger btn-delete">
-                    <i class="bi bi-trash"></i> 删除
-                </button>
-            </div>
-        `;
-        
-        contactList.appendChild(newItem);
-        
-        // 为新添加的按钮绑定事件
-        bindListItemEvents(newItem);
-        
-        showToast('新联系人已添加', 'success');
+    if (!seniorId) {
+        showToast('请选择关联的老人', 'error');
+        return;
     }
+    
+    // 准备API请求数据 - 更新老人的紧急联系人信息
+    const seniorData = {
+        emergency_contact: name,
+        emergency_phone: phone,
+        emergency_relation: relation
+    };
+    
+    // 更新老人信息中的紧急联系人
+    apiPut(`/seniors/${seniorId}`, seniorData)
+        .then(response => {
+            showToast('联系人信息已成功保存', 'success');
+            loadContactList(); // 重新加载联系人列表
+            loadElderlyList(); // 同时更新老人列表显示
+        })
+        .catch(error => {
+            showToast(`保存失败: ${error.message}`, 'error');
+        });
+}
+
+// 加载联系人列表（实际上是加载老人的紧急联系人信息）
+function loadContactList() {
+    const container = document.getElementById('contact-data-container');
+    const loadingIndicator = document.querySelector('#contact-list .loading-indicator');
+    const emptyState = document.querySelector('#contact-list .empty-state');
+    
+    if (!container) return;
+    
+    // 显示加载指示器
+    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+    if (emptyState) emptyState.style.display = 'none';
+    container.innerHTML = '';
+    
+    // 同时加载老人下拉列表选项
+    try {
+        loadSeniorOptions();
+    } catch (error) {
+        console.error('加载老人选项失败:', error);
+    }
+    
+    // 从API获取老人列表，筛选出有紧急联系人的老人
+    apiGet('/seniors')
+        .then(response => {
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            
+            if (!response || response.length === 0) {
+                // 显示空状态
+                if (emptyState) emptyState.style.display = 'flex';
+                return;
+            }
+            
+            // 筛选出有紧急联系人信息的老人
+            const seniorsWithContacts = response.filter(senior => 
+                senior.emergency_contact && senior.emergency_phone);
+            
+            if (seniorsWithContacts.length === 0) {
+                // 显示空状态
+                if (emptyState) emptyState.style.display = 'flex';
+                return;
+            }
+            
+            // 渲染联系人列表
+            seniorsWithContacts.forEach(senior => {
+                if (!senior || !senior.emergency_contact) return;
+                
+                const listItem = document.createElement('div');
+                listItem.className = 'list-item';
+                listItem.setAttribute('data-id', senior.id);
+                listItem.setAttribute('data-contact', senior.emergency_contact);
+                listItem.setAttribute('data-phone', senior.emergency_phone);
+                
+                listItem.innerHTML = `
+                    <div class="item-content">
+                        <h4 class="item-title">
+                            <i class="bi bi-person-fill"></i> ${senior.emergency_contact}
+                        </h4>
+                        <p class="item-description">
+                            电话：${senior.emergency_phone} | 关联老人：${senior.name}
+                        </p>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-icon btn-edit" title="编辑联系人" data-modal="contact-modal" data-senior-id="${senior.id}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-icon btn-call" title="拨打电话">
+                            <i class="bi bi-telephone"></i>
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(listItem);
+                
+                // 绑定按钮事件
+                const editBtn = listItem.querySelector('.btn-edit');
+                if (editBtn) {
+                    editBtn.addEventListener('click', function() {
+                        // 填充表单数据
+                        document.getElementById('contactId').value = 'edit'; // 标记为编辑模式
+                        document.getElementById('contactName').value = senior.emergency_contact;
+                        document.getElementById('contactPhone').value = senior.emergency_phone;
+                        document.getElementById('contactRelation').value = senior.emergency_relation || '';
+                        document.getElementById('contactSeniorId').value = senior.id;
+                    });
+                }
+                
+                const callBtn = listItem.querySelector('.btn-call');
+                if (callBtn) {
+                    callBtn.addEventListener('click', function() {
+                        // 模拟拨打电话
+                        showToast(`正在拨打电话: ${senior.emergency_phone}`, 'info');
+                    });
+                }
+            });
+        })
+        .catch(error => {
+            console.error('获取联系人列表失败:', error);
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            if (emptyState) {
+                emptyState.style.display = 'flex';
+                const emptyText = emptyState.querySelector('p');
+                if (emptyText) emptyText.textContent = '获取数据失败，请刷新重试';
+            }
+        });
+}
+
+// 加载老人选项到下拉列表
+function loadSeniorOptions() {
+    const seniorSelect = document.getElementById('contactSeniorId');
+    if (!seniorSelect) return;
+    
+    // 清空现有选项
+    seniorSelect.innerHTML = '<option value="">请选择关联老人</option>';
+    
+    // 从API获取老人列表
+    apiGet('/seniors')
+        .then(response => {
+            if (!response || response.length === 0) return;
+            
+            // 添加老人选项
+            response.forEach(senior => {
+                try {
+                    if (!senior || !senior.id || !senior.name) return;
+                    
+                    const option = document.createElement('option');
+                    option.value = senior.id;
+                    option.textContent = senior.name;
+                    seniorSelect.appendChild(option);
+                } catch (error) {
+                    console.error('处理老人选项失败:', error);
+                }
+            });
+        })
+        .catch(error => {
+            console.error('获取老人列表失败:', error);
+            // 失败时添加一个默认提示选项
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '加载老人列表失败';
+            option.disabled = true;
+            seniorSelect.appendChild(option);
+        });
 }
 
 // 初始化列表操作
 function initListActions() {
-    // 为所有列表项绑定事件
-    document.querySelectorAll('.list-item').forEach(item => {
-        bindListItemEvents(item);
-    });
+    console.log('初始化列表操作...');
     
-    // 设备列表的特殊按钮
-    document.querySelectorAll('.device-settings').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const deviceName = this.closest('.list-item').querySelector('.item-title').textContent;
-            showToast(`正在配置设备：${deviceName}`, 'info');
-        });
-    });
-    
-    document.querySelectorAll('.device-disconnect').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const listItem = this.closest('.list-item');
-            const deviceName = listItem.querySelector('.item-title').textContent;
-            
-            if (confirm(`确定要断开设备 ${deviceName} 吗？`)) {
-                listItem.style.opacity = '0.5';
-                showToast(`设备已断开连接：${deviceName}`, 'warning');
-            }
-        });
-    });
-    
-    // 刷新设备按钮
-    const scanDevicesBtn = document.getElementById('scanDevices');
-    if (scanDevicesBtn) {
-        scanDevicesBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showToast('正在扫描设备...', 'info');
-            
-            // 模拟扫描过程
-            setTimeout(() => {
-                showToast('设备扫描完成', 'success');
-            }, 2000);
-        });
+    try {
+        // 尝试加载老人列表
+        if (document.getElementById('elderly-data-container')) {
+            loadElderlyList();
+        }
+        
+        // 尝试加载联系人列表
+        if (document.getElementById('contact-data-container')) {
+            loadContactList();
+        }
+    } catch (error) {
+        console.error('初始化列表操作失败:', error);
+        showToast('加载数据失败，请刷新页面重试', 'error');
     }
 }
 
 // 为列表项元素绑定事件
 function bindListItemEvents(item) {
-    // 删除按钮
-    const deleteBtn = item.querySelector('.btn-delete');
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const listItem = this.closest('.list-item');
-            const name = listItem.querySelector('.item-title').textContent;
+    // 编辑按钮
+    const editBtn = item.querySelector('.btn-edit');
+    if (editBtn) {
+        editBtn.addEventListener('click', function() {
+            const id = item.getAttribute('data-id');
             
-            if (confirm(`确定要删除 ${name} 吗？`)) {
-                listItem.style.height = '0';
-                listItem.style.opacity = '0';
-                listItem.style.padding = '0';
-                listItem.style.margin = '0';
-                listItem.style.overflow = 'hidden';
-                
-                setTimeout(() => {
-                    listItem.remove();
-                }, 300);
-                
-                showToast(`${name} 已删除`, 'warning');
+            // 区分不同的模态窗口
+            const modalId = this.getAttribute('data-modal');
+            
+            if (modalId === 'elderly-modal') {
+                // 获取老人详细信息，填充表单
+                apiGet(`/seniors/${id}`)
+                    .then(senior => {
+                        document.getElementById('elderlyId').value = senior.id;
+                        document.getElementById('elderlyName').value = senior.name;
+                        document.getElementById('elderlyAge').value = senior.age;
+                        if (document.getElementById('elderlyGender')) {
+                            document.getElementById('elderlyGender').value = senior.gender || 'male';
+                        }
+                        document.getElementById('elderlyContact').value = senior.emergency_contact || '';
+                        document.getElementById('elderlyPhone').value = senior.emergency_phone || '';
+                    })
+                    .catch(error => {
+                        showToast(`获取老人信息失败: ${error.message}`, 'error');
+                    });
             }
         });
     }
     
-    // 编辑按钮事件已在模态窗口初始化函数中处理
+    // 删除按钮
+    const deleteBtn = item.querySelector('.btn-delete');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function() {
+            const id = item.getAttribute('data-id');
+            deleteElderly(id);
+        });
+    }
 }
 
 // 显示提示消息

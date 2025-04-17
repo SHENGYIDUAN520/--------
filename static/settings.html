@@ -12,7 +12,7 @@
     <div class="container">
         <header class="header">
             <h1>智能陪护数据监控平台 > 系统设置</h1>
-            <div class="current-time" id="current-time">2024年4月18日 12:54:39</div>
+            <div class="current-time" id="current-time">加载中...</div>
         </header>
         
         <main class="settings-container">
@@ -115,8 +115,16 @@
                             
                             <div class="list-container" id="elderly-list">
                                 <div class="loading-indicator">
-                                    <i class="bi bi-arrow-repeat"></i> 加载中...
+                                    <i class="bi bi-arrow-repeat"></i> 正在从服务器加载老人数据...
                                 </div>
+                                <div class="empty-state" style="display: none;">
+                                    <div class="empty-icon"><i class="bi bi-people"></i></div>
+                                    <p>暂无老人数据</p>
+                                    <button class="btn btn-primary" data-modal="elderly-modal">
+                                        <i class="bi bi-plus"></i> 添加老人
+                                    </button>
+                                </div>
+                                <div id="elderly-data-container"></div>
                                 <!-- 老人列表将从服务器动态加载 -->
                             </div>
                         </div>
@@ -134,8 +142,16 @@
                             
                             <div class="list-container" id="contact-list">
                                 <div class="loading-indicator">
-                                    <i class="bi bi-arrow-repeat"></i> 加载中...
+                                    <i class="bi bi-arrow-repeat"></i> 正在从服务器加载联系人数据...
                                 </div>
+                                <div class="empty-state" style="display: none;">
+                                    <div class="empty-icon"><i class="bi bi-telephone"></i></div>
+                                    <p>暂无联系人数据</p>
+                                    <button class="btn btn-primary" data-modal="contact-modal">
+                                        <i class="bi bi-plus"></i> 添加联系人
+                                    </button>
+                                </div>
+                                <div id="contact-data-container"></div>
                                 <!-- 联系人列表将从服务器动态加载 -->
                             </div>
                         </div>
@@ -148,7 +164,9 @@
                             <form class="settings-form" id="videoForm">
                                 <div class="form-group">
                                     <label class="form-label">摄像头设备</label>
-                                    <div class="form-static" id="camera-model">加载中...</div>
+                                    <div class="form-static" id="camera-model">
+                                        <div class="loading-indicator">正在获取摄像头信息...</div>
+                                    </div>
                                     <small class="form-hint">已连接的摄像头型号</small>
                                 </div>
                                 <div class="form-group">
@@ -227,15 +245,27 @@
                         <small class="form-hint">年龄范围：60-120岁</small>
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="elderlyRoom">房间号</label>
-                        <input type="text" class="form-control" id="elderlyRoom" required placeholder="请输入房间号">
-                        <small class="form-hint">例如：301</small>
+                        <label class="form-label" for="elderlyGender">性别</label>
+                        <select class="form-control" id="elderlyGender" required>
+                            <option value="male">男</option>
+                            <option value="female">女</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyContact">紧急联系人</label>
+                        <input type="text" class="form-control" id="elderlyContact" placeholder="请输入紧急联系人姓名">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="elderlyPhone">联系电话</label>
+                        <input type="tel" class="form-control" id="elderlyPhone" placeholder="请输入紧急联系人电话">
+                        <small class="form-hint">例如：13800138000</small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger">取消</button>
-                <button class="btn btn-primary btn-submit" form="elderlyForm">保存</button>
+                <button class="btn btn-primary">保存</button>
             </div>
         </div>
     </div>
@@ -251,24 +281,32 @@
                 <form id="contactForm">
                     <input type="hidden" id="contactId">
                     <div class="form-group">
-                        <label class="form-label" for="contactName">姓名</label>
+                        <label class="form-label" for="contactSeniorId">关联老人</label>
+                        <select class="form-control" id="contactSeniorId" required>
+                            <option value="">请选择关联老人</option>
+                            <!-- 选项将通过API动态加载 -->
+                        </select>
+                        <small class="form-hint">选择此联系人关联的老人</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="contactName">联系人姓名</label>
                         <input type="text" class="form-control" id="contactName" required placeholder="请输入联系人姓名">
                     </div>
                     <div class="form-group">
-                        <label class="form-label" for="contactRelation">关系</label>
-                        <input type="text" class="form-control" id="contactRelation" required placeholder="与老人的关系">
-                        <small class="form-hint">例如：儿子、女儿、孙子等</small>
+                        <label class="form-label" for="contactRelation">与老人关系</label>
+                        <input type="text" class="form-control" id="contactRelation" placeholder="请输入与老人的关系">
+                        <small class="form-hint">例如：子女、兄弟姐妹等</small>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="contactPhone">联系电话</label>
-                        <input type="tel" class="form-control" id="contactPhone" pattern="[0-9]{11}" required placeholder="请输入11位手机号码">
-                        <small class="form-hint">格式：11位手机号码</small>
+                        <input type="tel" class="form-control" id="contactPhone" required placeholder="请输入联系电话">
+                        <small class="form-hint">例如：13800138000</small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-danger">取消</button>
-                <button class="btn btn-primary btn-submit" form="contactForm">保存</button>
+                <button class="btn btn-primary">保存</button>
             </div>
         </div>
     </div>

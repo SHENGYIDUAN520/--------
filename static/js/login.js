@@ -43,12 +43,24 @@ document.addEventListener('DOMContentLoaded', function() {
         submitButton.disabled = true;
         submitButton.innerHTML = '<i class="bi bi-arrow-repeat"></i> 登录中...';
         
-        // 调用登录API
-        login(username, password)
+        // 调用登录API - 修复路径，移除重复的/api前缀
+        apiPost('/auth/login', { username, password })
             .then(response => {
                 if (response.token && response.user) {
-                    // 登录成功，重定向到首页
-                    window.location.href = '/static/index.html';
+                    console.log('登录成功，保存认证信息');
+                    // 保存认证信息 - 同时使用两套键名确保兼容性
+                    localStorage.setItem('token', response.token);
+                    localStorage.setItem('auth_token', response.token);
+                    localStorage.setItem('user', JSON.stringify(response.user));
+                    localStorage.setItem('user_info', JSON.stringify(response.user));
+                    
+                    // 设置全局状态
+                    AppState.token = response.token;
+                    AppState.user = response.user;
+                    
+                    console.log('认证信息已保存，即将跳转');
+                    // 使用replace直接跳转，避免浏览器历史记录问题
+                    window.location.replace('/static/index.html');
                 } else {
                     showLoginError('登录失败，请重试');
                 }
@@ -79,6 +91,14 @@ document.addEventListener('DOMContentLoaded', function() {
         forgotPasswordLink.addEventListener('click', function(event) {
             event.preventDefault();
             alert('请联系管理员重置密码');
+        });
+    }
+    
+    // 处理注册链接点击
+    const registerLink = document.querySelector('.register-link a');
+    if (registerLink) {
+        registerLink.addEventListener('click', function(event) {
+            // 注册链接原生跳转处理，无需额外逻辑
         });
     }
 });
