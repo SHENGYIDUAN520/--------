@@ -21,13 +21,22 @@
             <div class="panel status-panel">
                 <h2>状况检测</h2>
                 <div class="legend" id="status-legend">
-                    <!-- 图例将从服务器动态加载 -->
-                    <div class="loading-indicator">
+                    <!-- 默认图例数据 -->
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #36A2EB;"></span>
+                        <span class="legend-label">正常</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #FFCE56;"></span>
+                        <span class="legend-label">注意</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #FF6384;"></span>
+                        <span class="legend-label">异常</span>
+                    </div>
+                    <div class="loading-indicator" id="status-loading" style="display:none;">
                         <i class="bi bi-arrow-repeat"></i> 加载中...
                     </div>
-                </div>
-                <div class="status-indicators" id="status-indicators">
-                    <!-- 状态指示器将从服务器动态加载 -->
                 </div>
                 <div class="chart-container" id="status-chart"></div>
             </div>
@@ -35,39 +44,156 @@
             <!-- 中央数据显示区域 -->
             <div class="panel central-panel">
                 <h2>数据集中显示</h2>
-                <div class="globe-container" id="globe-container"></div>
+                <div class="globe-container" id="globe-container">
+                    <!-- 默认中央数据 -->
+                    <div class="central-data">
+                        <div class="data-summary">
+                            <div class="summary-item">
+                                <div class="summary-value" id="seniors-online">3</div>
+                                <div class="summary-label">在线老人</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="devices-connected">5</div>
+                                <div class="summary-label">已连接设备</div>
+                            </div>
+                            <div class="summary-item">
+                                <div class="summary-value" id="abnormal-events">0</div>
+                                <div class="summary-label">异常事件</div>
+                            </div>
+                        </div>
+                        <div class="connection-status">
+                            <i class="bi bi-wifi"></i> 系统运行中
+                        </div>
+                    </div>
+                    <div class="loading-indicator" id="center-loading" style="display:none;">
+                        <i class="bi bi-arrow-repeat"></i> 加载中...
+                    </div>
+                </div>
             </div>
             
             <!-- 静坐时间管控面板 -->
             <div class="panel sedentary-panel">
                 <h2>静坐时间管控</h2>
                 <div class="legend" id="sedentary-legend">
-                    <!-- 图例将从服务器动态加载 -->
-                    <div class="loading-indicator">
+                    <!-- 默认静坐时间图例 -->
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #4CAF50;"></span>
+                        <span class="legend-label">活动</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #FF6B6B;"></span>
+                        <span class="legend-label">静坐</span>
+                    </div>
+                    <div class="loading-indicator" id="sedentary-loading" style="display:none;">
                         <i class="bi bi-arrow-repeat"></i> 加载中...
                     </div>
                 </div>
-                <div class="chart-container" id="sedentary-chart"></div>
+                <div class="chart-container" id="sedentary-chart">
+                    <!-- 图表将通过JavaScript渲染 -->
+                    <div class="default-chart-text">
+                        今日静坐时间: <span id="today-sedentary-time">4小时20分钟</span><br>
+                        活动时间: 2小时10分钟
+                    </div>
+                </div>
             </div>
             
             <!-- 睡眠时长检测面板 -->
             <div class="panel sleep-panel">
                 <h2>睡眠时长检测</h2>
                 <div class="legend" id="sleep-legend">
-                    <!-- 图例将从服务器动态加载 -->
-                    <div class="loading-indicator">
+                    <!-- 默认睡眠时间图例 -->
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #3A6BDB;"></span>
+                        <span class="legend-label">深度睡眠</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #8CAEE6;"></span>
+                        <span class="legend-label">浅度睡眠</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background-color: #D9E3F8;"></span>
+                        <span class="legend-label">清醒</span>
+                    </div>
+                    <div class="loading-indicator" id="sleep-loading" style="display:none;">
                         <i class="bi bi-arrow-repeat"></i> 加载中...
                     </div>
                 </div>
-                <div class="chart-container" id="sleep-chart"></div>
+                <div class="chart-container" id="sleep-chart">
+                    <!-- 图表将通过JavaScript渲染 -->
+                    <div class="default-chart-text">
+                        昨晚睡眠: <span id="last-night-sleep">7小时40分钟</span><br>
+                        深度睡眠: 3小时15分钟
+                    </div>
+                </div>
             </div>
             
             <!-- 紧急联系人面板 -->
             <div class="panel contacts-panel">
                 <h2>紧急联系人</h2>
                 <div class="contacts-list" id="contacts-list">
-                    <!-- 联系人列表将从服务器动态加载 -->
-                    <div class="loading-indicator">
+                    <!-- 默认紧急联系人列表 -->
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">张医生</div>
+                            <div class="contact-relation">社区医生</div>
+                        </div>
+                        <div class="contact-action">
+                            <button class="btn btn-call"><i class="bi bi-telephone"></i></button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">李护士</div>
+                            <div class="contact-relation">值班护士</div>
+                        </div>
+                        <div class="contact-action">
+                            <button class="btn btn-call"><i class="bi bi-telephone"></i></button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">急救中心</div>
+                            <div class="contact-relation">紧急情况</div>
+                        </div>
+                        <div class="contact-action">
+                            <button class="btn btn-emergency"><i class="bi bi-telephone-fill"></i></button>
+                        </div>
+                    </div>
+                    <!-- 添加邻居联系人 -->
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">王阿姨</div>
+                            <div class="contact-relation">邻居</div>
+                        </div>
+                        <div class="contact-action">
+                            <button class="btn btn-call"><i class="bi bi-telephone"></i></button>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">刘叔叔</div>
+                            <div class="contact-relation">邻居</div>
+                        </div>
+                        <div class="contact-action">
+                            <button class="btn btn-call"><i class="bi bi-telephone"></i></button>
+                        </div>
+                    </div>
+                    <div class="loading-indicator" id="emergency-loading" style="display:none;">
                         <i class="bi bi-arrow-repeat"></i> 加载中...
                     </div>
                 </div>
@@ -90,6 +216,12 @@
             </div>
             <div class="alert-body" id="alert-details">
                 <!-- 报警详情将从服务器动态加载 -->
+                <p>检测到异常情况：<span id="alert-type">跌倒事件</span></p>
+                <p>发生时间：<span id="alert-time">2024-05-28 15:30:22</span></p>
+                <p>位置：<span id="alert-location">卧室</span></p>
+                <div class="alert-video" id="alert-video">
+                    <div class="placeholder-video">视频加载中...</div>
+                </div>
             </div>
             <div class="alert-actions">
                 <button class="btn btn-ignore" onclick="dismissAlert()">忽略</button>

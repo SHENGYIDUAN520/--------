@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initSleepChart();
     initGlobe();
     
+    // 加载真实数据
+    loadRealTimeData();
+    
     // 设置模拟数据定时更新
     setInterval(updateChartsWithRandomData, 5000);
     
@@ -48,6 +51,338 @@ function updateCurrentTime() {
     
     const timeString = `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
     document.getElementById('current-time').textContent = timeString;
+}
+
+// 加载真实数据的函数
+function loadRealTimeData() {
+    // 显示加载提示
+    document.getElementById('status-loading').style.display = 'block';
+    document.getElementById('center-loading').style.display = 'block';
+    document.getElementById('sedentary-loading').style.display = 'block';
+    document.getElementById('sleep-loading').style.display = 'block';
+    document.getElementById('emergency-loading').style.display = 'block';
+    
+    // 0. 先主动调用一次紧急联系人更新，确保显示默认数据
+    updateEmergencyContacts(null);
+    
+    // 1. 获取老人状态数据
+    getRequest('/api/seniors/status', function(data) {
+        if (data && data.success) {
+            updateStatusPanel(data.data);
+        } else {
+            console.warn('获取老人状态数据返回格式不正确，使用默认数据');
+            // 保留默认UI状态
+        }
+        document.getElementById('status-loading').style.display = 'none';
+    }, function(error) {
+        console.error('获取老人状态数据失败:', error);
+        document.getElementById('status-loading').style.display = 'none';
+        // 错误时保留默认UI状态，不需要额外处理
+    }, 'status-loading');
+    
+    // 2. 获取中央数据
+    getRequest('/api/dashboard/summary', function(data) {
+        if (data && data.success) {
+            updateCenterPanel(data.data);
+        } else {
+            console.warn('获取中央数据返回格式不正确，使用默认数据');
+            // 保留默认UI状态
+        }
+        document.getElementById('center-loading').style.display = 'none';
+    }, function(error) {
+        console.error('获取中央数据失败:', error);
+        document.getElementById('center-loading').style.display = 'none';
+        // 错误时保留默认UI状态，不需要额外处理
+    }, 'center-loading');
+    
+    // 3. 获取静坐时间数据
+    getRequest('/api/seniors/sedentary', function(data) {
+        if (data && data.success) {
+            updateSedentaryPanel(data.data);
+        } else {
+            console.warn('获取静坐时间数据返回格式不正确，使用默认数据');
+            // 保留默认UI状态
+        }
+        document.getElementById('sedentary-loading').style.display = 'none';
+    }, function(error) {
+        console.error('获取静坐时间数据失败:', error);
+        document.getElementById('sedentary-loading').style.display = 'none';
+        // 错误时保留默认UI状态，不需要额外处理
+    }, 'sedentary-loading');
+    
+    // 4. 获取睡眠数据
+    getRequest('/api/seniors/sleep', function(data) {
+        if (data && data.success) {
+            updateSleepPanel(data.data);
+        } else {
+            console.warn('获取睡眠数据返回格式不正确，使用默认数据');
+            // 保留默认UI状态
+        }
+        document.getElementById('sleep-loading').style.display = 'none';
+    }, function(error) {
+        console.error('获取睡眠数据失败:', error);
+        document.getElementById('sleep-loading').style.display = 'none';
+        // 错误时保留默认UI状态，不需要额外处理
+    }, 'sleep-loading');
+    
+    // 5. 获取紧急联系人
+    getRequest('/api/contacts', function(data) {
+        if (data && data.success) {
+            updateEmergencyContacts(data.data);
+        } else {
+            console.warn('获取紧急联系人返回格式不正确，使用默认数据');
+            // 保留默认UI状态
+        }
+        document.getElementById('emergency-loading').style.display = 'none';
+    }, function(error) {
+        console.error('获取紧急联系人失败:', error);
+        document.getElementById('emergency-loading').style.display = 'none';
+        // 错误时保留默认UI状态，不需要额外处理
+    }, 'emergency-loading');
+}
+
+// 更新状态面板
+function updateStatusPanel(data) {
+    if (!data) {
+        console.warn('状态面板更新：数据为空，跳过更新');
+        return;
+    }
+    
+    try {
+        // 更新状态图表
+        if (window.statusChart) {
+            const normalPercent = data.normalPercent || 70;
+            window.statusChart.setOption({
+                series: [{
+                    data: [{
+                        value: normalPercent,
+                        name: normalPercent > 80 ? '正常' : normalPercent > 50 ? '警告' : '异常'
+                    }],
+                    progress: {
+                        itemStyle: {
+                            color: normalPercent > 80 ? '#4CAF50' : normalPercent > 50 ? '#FF9800' : '#F44336'
+                        }
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: [
+                                [normalPercent/100, normalPercent > 80 ? '#4CAF50' : normalPercent > 50 ? '#FF9800' : '#F44336'],
+                                [1, 'rgba(255, 255, 255, 0.1)']
+                            ]
+                        }
+                    }
+                }]
+            });
+        }
+        
+        // 状态指示器已从UI中移除，改为仅显示百分比图表
+    } catch (error) {
+        console.error('更新状态面板时出错:', error);
+    }
+}
+
+// 更新中央面板
+function updateCenterPanel(data) {
+    if (!data) {
+        console.warn('中央面板更新：数据为空，跳过更新');
+        return;
+    }
+    
+    try {
+        // 更新中央数据
+        if (data.seniorsOnline !== undefined) {
+            document.getElementById('seniors-online').textContent = data.seniorsOnline;
+        }
+        if (data.devicesConnected !== undefined) {
+            document.getElementById('devices-connected').textContent = data.devicesConnected;
+        }
+        if (data.abnormalEvents !== undefined) {
+            document.getElementById('abnormal-events').textContent = data.abnormalEvents;
+        }
+        
+        // 如果有系统状态信息，更新连接状态指示器
+        if (data.systemStatus) {
+            const connectionStatusEl = document.querySelector('.connection-status');
+            if (connectionStatusEl) {
+                let statusIcon = 'bi-wifi';
+                let statusText = '系统运行中';
+                
+                if (data.systemStatus === 'error') {
+                    statusIcon = 'bi-wifi-off';
+                    statusText = '系统异常';
+                } else if (data.systemStatus === 'warning') {
+                    statusIcon = 'bi-exclamation-triangle';
+                    statusText = '系统警告';
+                }
+                
+                connectionStatusEl.innerHTML = `<i class="bi ${statusIcon}"></i> ${statusText}`;
+            }
+        }
+    } catch (error) {
+        console.error('更新中央面板时出错:', error);
+    }
+}
+
+// 更新静坐时间面板
+function updateSedentaryPanel(data) {
+    if (!data) {
+        console.warn('静坐时间面板更新：数据为空，跳过更新');
+        return;
+    }
+    
+    try {
+        // 更新静坐时间图表
+        if (window.sedentaryChart) {
+            // 优先使用API返回的数据，如果没有则使用默认值
+            const activityTime = data.activityTime || 30;
+            const sedentaryTime = data.sedentaryTime || 70;
+            
+            window.sedentaryChart.setOption({
+                series: [{
+                    data: [
+                        // 修改颜色以匹配UI
+                        { value: activityTime, name: '活动', itemStyle: { color: '#4CAF50' } },
+                        { value: sedentaryTime, name: '静坐', itemStyle: { color: '#FF6B6B' } }
+                    ]
+                }]
+            });
+        }
+        
+        // 更新今日静坐时间文本
+        if (data.todaySedentaryTime) {
+            document.getElementById('today-sedentary-time').textContent = data.todaySedentaryTime;
+        }
+    } catch (error) {
+        console.error('更新静坐时间面板时出错:', error);
+    }
+}
+
+// 更新睡眠面板
+function updateSleepPanel(data) {
+    if (!data) {
+        console.warn('睡眠面板更新：数据为空，跳过更新');
+        return;
+    }
+    
+    try {
+        // 更新睡眠图表
+        if (window.sleepChart && data.weekData) {
+            window.sleepChart.setOption({
+                xAxis: {
+                    data: data.weekData.days || ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+                },
+                series: [
+                    {
+                        name: '深度睡眠',
+                        data: data.weekData.deep || [3, 2.5, 3.5, 3, 2.5, 3, 3.5]
+                    },
+                    {
+                        name: '浅度睡眠',
+                        data: data.weekData.light || [4, 4, 4.5, 4, 3.5, 4.5, 4.5]
+                    },
+                    {
+                        name: '清醒',
+                        data: data.weekData.awake || [0.5, 1, 0.5, 0.5, 1, 0.5, 0.5]
+                    }
+                ]
+            });
+        }
+        
+        // 更新昨晚睡眠时长
+        if (data.lastNightSleep) {
+            document.getElementById('last-night-sleep').textContent = data.lastNightSleep;
+        }
+    } catch (error) {
+        console.error('更新睡眠面板时出错:', error);
+    }
+}
+
+// 更新紧急联系人
+function updateEmergencyContacts(data) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('紧急联系人更新：数据为空或格式不正确，使用默认数据');
+        // 使用默认数据
+        data = [
+            {
+                id: '1',
+                name: '张医生',
+                relation: '社区医生',
+                type: 'normal'
+            },
+            {
+                id: '2',
+                name: '李护士',
+                relation: '值班护士',
+                type: 'normal'
+            },
+            {
+                id: '3',
+                name: '急救中心',
+                relation: '紧急情况',
+                type: 'emergency'
+            },
+            {
+                id: '4',
+                name: '王阿姨',
+                relation: '邻居',
+                type: 'normal'
+            },
+            {
+                id: '5',
+                name: '刘叔叔',
+                relation: '邻居',
+                type: 'normal'
+            }
+        ];
+    }
+    
+    try {
+        const contactsListEl = document.getElementById('contacts-list');
+        if (contactsListEl) {
+            // 判断是否需要重新渲染
+            // 如果从API获取到了数据，才进行全量替换
+            if (data.length > 0 && data[0].id) {
+                // 清空现有联系人，但保留加载指示器
+                const loadingEl = document.getElementById('emergency-loading');
+                contactsListEl.innerHTML = '';
+                if (loadingEl) {
+                    contactsListEl.appendChild(loadingEl);
+                }
+                
+                // 添加新的联系人
+                data.forEach(contact => {
+                    const contactItem = document.createElement('div');
+                    contactItem.className = 'contact-item';
+                    
+                    // 设置紧急按钮类型
+                    const isEmergency = contact.isEmergency || contact.type === 'emergency';
+                    const buttonClass = isEmergency ? 'btn-emergency' : 'btn-call';
+                    const iconClass = isEmergency ? 'bi-telephone-fill' : 'bi-telephone';
+                    
+                    contactItem.innerHTML = `
+                        <div class="contact-avatar">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div class="contact-info">
+                            <div class="contact-name">${contact.name}</div>
+                            <div class="contact-relation">${contact.relation || contact.title || ''}</div>
+                        </div>
+                        <div class="contact-action">
+                            <button class="btn ${buttonClass}" onclick="emergencyCall('${contact.id || ''}', '${contact.name}')">
+                                <i class="bi ${iconClass}"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    contactsListEl.appendChild(contactItem);
+                });
+            } else {
+                console.log('没有收到有效的联系人数据，保留现有联系人列表');
+            }
+        }
+    } catch (error) {
+        console.error('更新紧急联系人时出错:', error);
+    }
 }
 
 // 初始化状况检测图表
@@ -149,8 +484,9 @@ function initSedentaryChart() {
                 show: false
             },
             data: [
-                { value: 27, name: '异常', itemStyle: { color: '#F44336' } },
-                { value: 73, name: '正常', itemStyle: { color: '#4CAF50' } }
+                // 修改颜色以匹配UI
+                { value: 30, name: '活动', itemStyle: { color: '#4CAF50' } },
+                { value: 70, name: '静坐', itemStyle: { color: '#FF6B6B' } }
             ]
         }]
     };

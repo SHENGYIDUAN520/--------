@@ -248,18 +248,83 @@ function apiGet(endpoint, params = {}) {
                 */
             }
             
-            return response.json().then(data => {
-                throw new Error(data.message || `请求失败: ${response.status}`);
-            });
+            // 抛出错误以便调用者处理
+            throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
         }
         
         return response.json();
     })
     .catch(error => {
         AppState.isLoading = false;
-        AppState.errors.push(error.message || '请求失败');
-        console.error('API请求错误:', error);
+        AppState.errors.push(error.message);
+        console.error('API请求错误', error);
         throw error;
+    });
+}
+
+/**
+ * 通用GET请求函数 - 用于前端API请求
+ * @param {string} url 请求URL
+ * @param {Function} successCallback 成功回调函数
+ * @param {Function} errorCallback 错误回调函数
+ * @param {string} loadingElementId 加载指示器元素ID
+ */
+function getRequest(url, successCallback, errorCallback, loadingElementId) {
+    // 显示加载指示器
+    if (loadingElementId) {
+        const loadingElement = document.getElementById(loadingElementId);
+        if (loadingElement) {
+            loadingElement.style.display = 'block';
+        }
+    }
+    
+    // 设置请求头
+    const headers = {};
+    const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // 发送请求
+    fetch(url, {
+        method: 'GET',
+        headers: headers,
+        credentials: 'include'
+    })
+    .then(response => {
+        // 隐藏加载指示器
+        if (loadingElementId) {
+            const loadingElement = document.getElementById(loadingElementId);
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        }
+        
+        if (!response.ok) {
+            throw new Error(`请求失败: ${response.status} ${response.statusText}`);
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        if (successCallback && typeof successCallback === 'function') {
+            successCallback(data);
+        }
+    })
+    .catch(error => {
+        console.error('请求错误:', error);
+        
+        // 隐藏加载指示器
+        if (loadingElementId) {
+            const loadingElement = document.getElementById(loadingElementId);
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        }
+        
+        if (errorCallback && typeof errorCallback === 'function') {
+            errorCallback(error);
+        }
     });
 }
 

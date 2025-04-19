@@ -165,6 +165,8 @@ body {
 
 .contacts-panel {
     grid-area: contacts;
+    display: flex;
+    flex-direction: column;
 }
 
 /* 中央面板样式 */
@@ -250,33 +252,84 @@ body {
 .contacts-list {
     display: flex;
     flex-direction: column;
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+/* 自定义滚动条样式 - 针对Webkit浏览器 */
+.contacts-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.contacts-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.contacts-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
 }
 
 .contact-item {
     padding: 10px;
     border-bottom: 1px solid var(--border-color);
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .contact-item:last-child {
     border-bottom: none;
 }
 
-.contact-title {
-    font-size: 14px;
+.contact-avatar {
+    margin-right: 10px;
+    font-size: 24px;
     color: var(--text-secondary);
-    margin-bottom: 5px;
+}
+
+.contact-info {
+    flex: 1;
 }
 
 .contact-name {
     font-size: 16px;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
-.contact-phone {
-    font-size: 14px;
+.contact-relation {
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.7);
+}
+
+.contact-action {
+    margin-left: 10px;
+}
+
+.btn-call {
+    background-color: var(--accent-blue);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.btn-emergency {
+    background-color: var(--accent-red);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
 /* 导航栏样式 */
