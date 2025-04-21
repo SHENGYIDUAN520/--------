@@ -7,6 +7,62 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/settings.css">
+    <style>
+        /* 连接状态样式 */
+        .connection-status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        
+        .connection-status .unknown {
+            color: #6c757d;
+        }
+        
+        .connection-status .testing {
+            color: #0dcaf0;
+        }
+        
+        .connection-status .success {
+            color: #198754;
+        }
+        
+        .connection-status .error {
+            color: #dc3545;
+        }
+        
+        .connection-status i {
+            margin-right: 5px;
+        }
+        
+        /* 旋转动画 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .connection-status .testing i {
+            animation: spin 1s linear infinite;
+        }
+        
+        /* 输入组样式 */
+        .input-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-group .form-control {
+            flex: 1;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        
+        .input-group .btn {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            margin-left: -1px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -120,9 +176,6 @@
                                 <div class="empty-state" style="display: none;">
                                     <div class="empty-icon"><i class="bi bi-people"></i></div>
                                     <p>暂无老人数据</p>
-                                    <button class="btn btn-primary" data-modal="elderly-modal">
-                                        <i class="bi bi-plus"></i> 添加老人
-                                    </button>
                                 </div>
                                 <div id="elderly-data-container"></div>
                                 <!-- 老人列表将从服务器动态加载 -->
@@ -147,9 +200,6 @@
                                 <div class="empty-state" style="display: none;">
                                     <div class="empty-icon"><i class="bi bi-telephone"></i></div>
                                     <p>暂无联系人数据</p>
-                                    <button class="btn btn-primary" data-modal="contact-modal">
-                                        <i class="bi bi-plus"></i> 添加联系人
-                                    </button>
                                 </div>
                                 <div id="contact-data-container"></div>
                                 <!-- 联系人列表将从服务器动态加载 -->
@@ -159,6 +209,28 @@
                     
                     <!-- 系统参数 -->
                     <div class="tab-content" id="system-tab">
+                        <div class="settings-card">
+                            <h3 class="section-title"><i class="bi bi-server"></i> 服务器配置</h3>
+                            <form class="settings-form" id="serverConfigForm">
+                                <div class="form-group">
+                                    <label class="form-label">服务器地址</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="serverUrl" placeholder="例如: http://localhost:5000">
+                                        <button type="button" class="btn btn-secondary" id="setLocalServer">本地服务器</button>
+                                    </div>
+                                    <small class="form-hint">API服务器的完整地址，包括协议、地址和端口</small>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">连接状态</label>
+                                    <div id="connectionStatus" class="connection-status">
+                                        <span class="unknown"><i class="bi bi-question-circle"></i> 未测试</span>
+                                    </div>
+                                    <small class="form-hint">点击保存按钮将自动测试连接</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-all"></i> 保存并测试连接</button>
+                            </form>
+                        </div>
+                        
                         <div class="settings-card">
                             <h3 class="section-title"><i class="bi bi-camera-video"></i> 视频监控设置</h3>
                             <form class="settings-form" id="videoForm">
@@ -181,11 +253,6 @@
                                     <label class="form-label">视频帧率 (fps)</label>
                                     <input type="number" class="form-control" id="videoFps" min="15" max="30" placeholder="建议设置在15-30之间">
                                     <small class="form-hint">更高帧率画面更流畅，但需要更多带宽</small>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">服务器地址</label>
-                                    <input type="text" class="form-control" id="serverUrl" placeholder="输入服务器地址">
-                                    <small class="form-hint">K230开发板将向此地址发送视频流</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">视频保存天数</label>
@@ -218,7 +285,7 @@
         </main>
         
         <nav class="navigation">
-            <a href="index.html" class="nav-item">仪表盘</a>
+            <a href="index.html" class="nav-item">首页</a>
             <a href="detail.html" class="nav-item">老人详情</a>
             <a href="video.html" class="nav-item">视频监控</a>
             <a href="settings.html" class="nav-item active">系统设置</a>

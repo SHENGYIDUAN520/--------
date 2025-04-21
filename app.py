@@ -9,12 +9,28 @@ import hashlib
 import json
 from datetime import datetime, timedelta
 from functools import wraps
+import random
 
 # 导入数据库API模块
 from database import api
 
 app = Flask(__name__, static_folder='static')
-CORS(app)  # 允许跨域请求
+# 完善CORS配置，启用credentials支持，指定允许的源、方法和头部
+CORS(app, 
+     supports_credentials=True, 
+     resources={r"/api/*": {
+         "origins": ["http://localhost:5000", "http://127.0.0.1:5000", "http://198.18.0.1:5000", "*"],
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+         "expose_headers": ["Content-Type", "Authorization"],
+         "max_age": 86400
+     }})
+
+# 添加全局OPTIONS预检请求处理
+@app.route('/api/<path:path>', methods=['OPTIONS'])
+def options_handler(path):
+    response = app.make_default_options_response()
+    return response
 
 # JWT密钥
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-here')
@@ -83,7 +99,7 @@ def login():
         })
         
         # 设置会话Cookie
-        resp.set_cookie('session_id', session_id, httponly=True, max_age=86400)
+        resp.set_cookie('session_id', session_id, httponly=True, max_age=86400, samesite='Lax')
         
         return resp
     
@@ -127,7 +143,7 @@ def login():
         })
         
         # 设置会话Cookie
-        resp.set_cookie('session_id', session_id, httponly=True, max_age=86400)
+        resp.set_cookie('session_id', session_id, httponly=True, max_age=86400, samesite='Lax')
         
         return resp
     except Exception as e:
@@ -578,6 +594,85 @@ def get_dashboard_stats():
     }
     
     return jsonify(stats)
+
+# 模拟数据生成函数
+def generate_mock_data():
+    return {
+        "status": random.choice(["正常", "异常"]),
+        "lastUpdate": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+# API路由
+@app.route('/api/seniors/status')
+def get_senior_status():
+    return jsonify({
+        "status": "正常",
+        "lastUpdate": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "location": "卧室",
+        "activity": "静坐",
+        "heartRate": random.randint(65, 85),
+        "temperature": round(random.uniform(36.3, 37.0), 1)
+    })
+
+@app.route('/api/dashboard/summary')
+def get_dashboard_summary():
+    return jsonify({
+        "totalSeniors": 1,
+        "abnormalCount": 0,
+        "alertsToday": random.randint(0, 3),
+        "onlineDevices": 1
+    })
+
+@app.route('/api/seniors/sedentary')
+def get_sedentary_time():
+    current_hour = datetime.now().hour
+    data = []
+    for i in range(24):
+        if i <= current_hour:
+            activity_time = random.randint(20, 50)
+            sedentary_time = 60 - activity_time
+            data.append({
+                "hour": f"{i:02d}:00",
+                "activity": activity_time,
+                "sedentary": sedentary_time
+            })
+    return jsonify(data)
+
+@app.route('/api/seniors/sleep')
+def get_sleep_data():
+    today = datetime.now().date()
+    data = []
+    for i in range(7):
+        date = today - timedelta(days=i)
+        data.append({
+            "date": date.strftime("%Y-%m-%d"),
+            "deepSleep": random.randint(6, 8),
+            "lightSleep": random.randint(1, 3)
+        })
+    return jsonify(data)
+
+@app.route('/api/contacts')
+def get_contacts():
+    return jsonify([
+        {
+            "id": 1,
+            "name": "张医生",
+            "relation": "主治医生",
+            "phone": "13800138001"
+        },
+        {
+            "id": 2,
+            "name": "李护士",
+            "relation": "责任护士",
+            "phone": "13800138002"
+        },
+        {
+            "id": 3,
+            "name": "刘叔叔",
+            "relation": "邻居",
+            "phone": "13800138003"
+        }
+    ])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) 

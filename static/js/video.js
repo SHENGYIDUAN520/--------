@@ -19,7 +19,7 @@ const statusBadge = document.querySelector('.status-badge');
 // 初始化函数
 function initVideoPage() {
     // 从localStorage获取服务器地址
-    serverUrl = localStorage.getItem('serverUrl') || 'http://47.97.160.91:5000';
+    serverUrl = localStorage.getItem('serverUrl') || 'http://localhost:5000';
     
     // 设置事件监听器
     btnConnect.addEventListener('click', connectToStream);

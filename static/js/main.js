@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initStatusChart();
     initSedentaryChart();
     initSleepChart();
-    initGlobe();
     
     // 加载真实数据
     loadRealTimeData();
@@ -57,7 +56,6 @@ function updateCurrentTime() {
 function loadRealTimeData() {
     // 显示加载提示
     document.getElementById('status-loading').style.display = 'block';
-    document.getElementById('center-loading').style.display = 'block';
     document.getElementById('sedentary-loading').style.display = 'block';
     document.getElementById('sleep-loading').style.display = 'block';
     document.getElementById('emergency-loading').style.display = 'block';
@@ -88,12 +86,10 @@ function loadRealTimeData() {
             console.warn('获取中央数据返回格式不正确，使用默认数据');
             // 保留默认UI状态
         }
-        document.getElementById('center-loading').style.display = 'none';
     }, function(error) {
         console.error('获取中央数据失败:', error);
-        document.getElementById('center-loading').style.display = 'none';
         // 错误时保留默认UI状态，不需要额外处理
-    }, 'center-loading');
+    });
     
     // 3. 获取静坐时间数据
     getRequest('/api/seniors/sedentary', function(data) {
@@ -189,33 +185,97 @@ function updateCenterPanel(data) {
     }
     
     try {
-        // 更新中央数据
-        if (data.seniorsOnline !== undefined) {
-            document.getElementById('seniors-online').textContent = data.seniorsOnline;
+        // 更新医疗机构数据，如果API提供了这些数据
+        if (data.hospitalCount !== undefined) {
+            document.getElementById('hospitals-count').textContent = data.hospitalCount;
         }
-        if (data.devicesConnected !== undefined) {
-            document.getElementById('devices-connected').textContent = data.devicesConnected;
+        if (data.clinicCount !== undefined) {
+            document.getElementById('clinics-count').textContent = data.clinicCount;
         }
-        if (data.abnormalEvents !== undefined) {
-            document.getElementById('abnormal-events').textContent = data.abnormalEvents;
+        if (data.pharmacyCount !== undefined) {
+            document.getElementById('pharmacies-count').textContent = data.pharmacyCount;
         }
         
-        // 如果有系统状态信息，更新连接状态指示器
-        if (data.systemStatus) {
-            const connectionStatusEl = document.querySelector('.connection-status');
-            if (connectionStatusEl) {
-                let statusIcon = 'bi-wifi';
-                let statusText = '系统运行中';
-                
-                if (data.systemStatus === 'error') {
-                    statusIcon = 'bi-wifi-off';
-                    statusText = '系统异常';
-                } else if (data.systemStatus === 'warning') {
-                    statusIcon = 'bi-exclamation-triangle';
-                    statusText = '系统警告';
+        // 更新最近医院信息
+        if (data.nearestHospital) {
+            const nearestInfo = document.querySelector('.nearest-info');
+            if (nearestInfo) {
+                nearestInfo.style.display = 'block';
+                document.getElementById('nearest-name').textContent = data.nearestHospital.name || '未知';
+                document.getElementById('nearest-address').textContent = data.nearestHospital.address || '未知';
+                document.getElementById('nearest-distance').textContent = 
+                    data.nearestHospital.distance ? 
+                    (data.nearestHospital.distance > 1000 ? 
+                        (data.nearestHospital.distance / 1000).toFixed(1) + ' 公里' : 
+                        data.nearestHospital.distance + ' 米') : 
+                    '未知';
+            }
+        }
+        
+        // 如果API提供了医院位置数据，更新地图上的标记
+        if (data.medicalFacilities && window.amapInstance) {
+            // 清除现有标记
+            if (window.hospitalMarkers && window.hospitalMarkers.length > 0) {
+                window.amapInstance.remove(window.hospitalMarkers);
+            }
+            
+            // 重置标记数组
+            window.hospitalMarkers = [];
+            
+            // 添加新标记
+            data.medicalFacilities.forEach(facility => {
+                if (facility.location && facility.location.lng && facility.location.lat) {
+                    // 根据设施类型设置不同图标
+                    let iconUrl = '';
+                    
+                    if (facility.type === 'hospital') {
+                        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png';
+                    } else if (facility.type === 'clinic') {
+                        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png';
+                    } else if (facility.type === 'pharmacy') {
+                        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_y.png';
+                    } else {
+                        iconUrl = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png';
+                    }
+                    
+                    const marker = new AMap.Marker({
+                        position: [facility.location.lng, facility.location.lat],
+                        title: facility.name,
+                        icon: iconUrl,
+                        anchor: 'bottom-center'
+                    });
+                    
+                    // 添加信息窗体
+                    const infoWindow = new AMap.InfoWindow({
+                        content: `
+                            <div style="padding:10px;">
+                                <h4>${facility.name}</h4>
+                                <p>地址：${facility.address || '暂无地址信息'}</p>
+                                <p>距离：${facility.distance ? (facility.distance + '米') : '未知'}</p>
+                            </div>
+                        `,
+                        offset: new AMap.Pixel(0, -30)
+                    });
+                    
+                    // 点击标记时显示信息窗体
+                    marker.on('click', function() {
+                        infoWindow.open(window.amapInstance, marker.getPosition());
+                    });
+                    
+                    window.hospitalMarkers.push(marker);
                 }
+            });
+            
+            // 将标记添加到地图
+            if (window.hospitalMarkers.length > 0) {
+                window.amapInstance.add(window.hospitalMarkers);
                 
-                connectionStatusEl.innerHTML = `<i class="bi ${statusIcon}"></i> ${statusText}`;
+                // 调整地图视角以包含所有标记点
+                try {
+                    window.amapInstance.setFitView(window.hospitalMarkers);
+                } catch (fitError) {
+                    console.warn('调整地图视角失败：', fitError);
+                }
             }
         }
     } catch (error) {
@@ -629,87 +689,6 @@ function initSleepChart() {
     
     // 保存图表实例以便后续更新
     window.sleepChart = myChart;
-    
-    // 窗口大小变化时，重新调整图表尺寸
-    window.addEventListener('resize', function() {
-        myChart.resize();
-    });
-}
-
-// 初始化中央地球/网络节点动画
-function initGlobe() {
-    const chartDom = document.getElementById('globe-container');
-    const myChart = echarts.init(chartDom);
-    
-    // 生成一些随机网络节点和连接
-    const nodes = [];
-    const edges = [];
-    const categories = ['设备', '老人', '医护', '家属'];
-    
-    // 生成节点数据
-    for (let i = 0; i < 20; i++) {
-        const category = Math.floor(Math.random() * categories.length);
-        nodes.push({
-            name: categories[category] + '_' + i,
-            category: category,
-            value: Math.random() * 20 + 20
-        });
-    }
-    
-    // 生成边数据
-    for (let i = 0; i < nodes.length; i++) {
-        const target = Math.floor(Math.random() * nodes.length);
-        if (i !== target) {
-            edges.push({
-                source: i,
-                target: target,
-                value: Math.random()
-            });
-        }
-    }
-    
-    const option = {
-        tooltip: {},
-        animationDurationUpdate: 1500,
-        animationEasingUpdate: 'quinticInOut',
-        series: [{
-            type: 'graph',
-            layout: 'force',
-            force: {
-                repulsion: 200,
-                edgeLength: 80
-            },
-            roam: true,
-            label: {
-                show: false
-            },
-            emphasis: {
-                lineStyle: {
-                    width: 5
-                }
-            },
-            data: nodes,
-            links: edges,
-            categories: categories.map(name => ({ name })),
-            lineStyle: {
-                opacity: 0.3,
-                width: 1,
-                curveness: 0.3,
-                color: '#2196F3'
-            },
-            itemStyle: {
-                borderColor: '#fff',
-                borderWidth: 1,
-                shadowBlur: 8,
-                shadowColor: 'rgba(0, 0, 0, 0.3)'
-            }
-        }]
-    };
-    
-    myChart.setOption(option);
-    
-    // 保存图表实例以便后续更新
-    window.globeChart = myChart;
     
     // 窗口大小变化时，重新调整图表尺寸
     window.addEventListener('resize', function() {

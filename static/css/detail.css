@@ -47,30 +47,84 @@
     grid-area: alerts;
 }
 
-/* 信息内容样式 */
-.info-content {
+/* 老人基本信息 */
+.senior-profile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.avatar-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.senior-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 15px;
+    background-color: #ccc;
+    object-fit: cover;
+}
+
+.senior-id {
     display: flex;
     flex-direction: column;
 }
 
-.info-item {
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border-color);
+.senior-name {
+    font-size: 18px;
+    font-weight: bold;
     display: flex;
+    align-items: center;
 }
 
-.info-item:last-child {
-    border-bottom: none;
+.gender-tag {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background-color: #ffc107;
+    color: #000;
+    margin-left: 8px;
+    font-weight: normal;
+}
+
+.senior-id-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* 基本信息样式 */
+.senior-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
 }
 
 .info-label {
     font-size: 14px;
     color: var(--text-secondary);
-    min-width: 100px;
+    margin-right: 8px;
 }
 
 .info-value {
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text-primary);
 }
 
@@ -115,33 +169,101 @@
     transform: translateY(-2px);
 }
 
-/* 记录列表样式 */
-.record-list {
+/* 活动统计样式 */
+.activity-content {
     display: flex;
     flex-direction: column;
 }
 
-.record-item {
-    padding: 10px;
+.activity-date {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border-color);
+}
+
+.activity-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 15px;
+    margin-bottom: 20px;
+}
+
+.activity-stat-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
 }
 
-.record-item:last-child {
-    border-bottom: none;
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--accent-blue);
+    margin-bottom: 5px;
 }
 
-.record-date {
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.total-steps {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.steps-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--accent-green);
+}
+
+.steps-label {
     font-size: 14px;
     color: var(--text-secondary);
-    margin-right: 15px;
-    min-width: 100px;
 }
 
-.record-content {
-    font-size: 15px;
-    color: var(--accent-red);
+/* 异常记录样式 */
+.record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.alert-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.high-risk {
+    background-color: rgba(244, 67, 54, 0.2);
+    border-left: 4px solid var(--accent-red);
+}
+
+.medium-risk {
+    background-color: rgba(255, 152, 0, 0.2);
+    border-left: 4px solid #FF9800;
+}
+
+.alert-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.alert-text {
+    font-size: 14px;
+    color: var(--text-primary);
 }
 
 /* 响应式设计 */

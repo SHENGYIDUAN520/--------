@@ -2,8 +2,11 @@
  * 智能陪护监控平台 - 通用JavaScript函数
  */
 
-// API基础URL - 修改为相对路径
+// API基础URL - 修改为相对路径，避免跨域问题
 const API_BASE_URL = '/api';
+
+// 服务器URL - 用于绝对路径请求
+const SERVER_URL = '';
 
 // 全局状态对象
 const AppState = {
@@ -25,9 +28,41 @@ document.addEventListener('DOMContentLoaded', function() {
         user: localStorage.getItem('user_info')
     });
     
+    // 加载服务器配置
+    loadServerConfig();
+    
     // 检查登录状态
     checkAuthStatus();
 });
+
+/**
+ * 从localStorage加载服务器配置
+ */
+function loadServerConfig() {
+    try {
+        const configStr = localStorage.getItem('server_config');
+        if (configStr) {
+            const config = JSON.parse(configStr);
+            if (config && config.serverUrl) {
+                // 动态更新API基础URL
+                window.API_BASE_URL = `${config.serverUrl}/api`;
+                window.SERVER_URL = config.serverUrl;
+                console.log('已从本地存储加载服务器配置:', config.serverUrl);
+                return;
+            }
+        }
+        
+        // 兼容格式检查
+        const serverUrl = localStorage.getItem('serverUrl');
+        if (serverUrl) {
+            window.API_BASE_URL = `${serverUrl}/api`;
+            window.SERVER_URL = serverUrl;
+            console.log('已从serverUrl加载服务器配置:', serverUrl);
+        }
+    } catch (error) {
+        console.error('加载服务器配置失败:', error);
+    }
+}
 
 /**
  * 更新页面当前时间显示
@@ -65,6 +100,10 @@ function checkAuthStatus() {
     const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
     console.log('找到token:', token ? '是' : '否');
     
+    // 获取当前服务器地址
+    const serverUrl = window.API_BASE_URL || API_BASE_URL;
+    console.log('当前API地址:', serverUrl);
+    
     // ===== 临时解决方案 =====
     // 如果没有token，为测试创建一个虚拟token
     if (!token) {
@@ -87,6 +126,10 @@ function checkAuthStatus() {
         AppState.token = testToken;
         AppState.user = testUser;
         console.log('已创建测试用户和token');
+        
+        // 显示提示
+        showAuthToast('使用测试账户登录，这仅用于开发/演示目的', 'info');
+        
         return;
     }
     
@@ -109,6 +152,9 @@ function checkAuthStatus() {
             AppState.user = JSON.parse(userJson);
             console.log('成功解析用户信息，用户名:', AppState.user.username);
             
+            // 显示欢迎提示
+            showAuthToast(`欢迎回来，${AppState.user.username}`, 'success');
+            
             // 这里不再调用任何API，直接使用localStorage中的信息
             return;
         } catch (e) {
@@ -119,6 +165,9 @@ function checkAuthStatus() {
             localStorage.removeItem('user_info'); 
             localStorage.removeItem('user');
             console.log('清除了无效的用户数据');
+            
+            // 显示错误提示
+            showAuthToast('用户数据无效，请重新登录', 'warning');
         }
     }
     
@@ -130,6 +179,86 @@ function checkAuthStatus() {
         username: 'admin',
         role: 'admin'
     }; // 设置一个临时用户对象
+    
+    // 显示提示
+    showAuthToast('使用默认账户信息', 'info');
+}
+
+/**
+ * 显示认证相关的提示消息
+ * @param {string} message 提示信息
+ * @param {string} type 提示类型 (success/info/warning/error)
+ */
+function showAuthToast(message, type = 'info') {
+    // 检查是否已存在提示
+    let authToast = document.getElementById('auth-toast');
+    
+    if (!authToast) {
+        authToast = document.createElement('div');
+        authToast.id = 'auth-toast';
+        
+        // 根据类型设置不同背景色
+        let bgColor, textColor;
+        switch(type) {
+            case 'success':
+                bgColor = '#d1e7dd';
+                textColor = '#0f5132';
+                break;
+            case 'warning':
+                bgColor = '#fff3cd';
+                textColor = '#856404';
+                break;
+            case 'error':
+                bgColor = '#f8d7da';
+                textColor = '#721c24';
+                break;
+            default: // info
+                bgColor = '#cff4fc';
+                textColor = '#055160';
+        }
+        
+        authToast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: ${bgColor};
+            color: ${textColor};
+            padding: 10px 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 10000;
+            max-width: 300px;
+            animation: fadeIn 0.3s ease;
+            font-size: 14px;
+        `;
+        
+        // 添加关闭按钮
+        const closeButton = document.createElement('span');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.cssText = `
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        `;
+        
+        closeButton.addEventListener('click', function() {
+            document.body.removeChild(authToast);
+        });
+        
+        authToast.appendChild(document.createTextNode(message));
+        authToast.appendChild(closeButton);
+        
+        document.body.appendChild(authToast);
+        
+        // 3秒后自动关闭
+        setTimeout(() => {
+            if (authToast.parentNode) {
+                authToast.parentNode.removeChild(authToast);
+            }
+        }, 3000);
+    }
 }
 
 /**
@@ -200,6 +329,9 @@ function logout() {
  * @returns {Promise} API响应Promise
  */
 function apiGet(endpoint, params = {}) {
+    // 确保使用最新的API基础URL
+    const apiBaseUrl = window.API_BASE_URL || API_BASE_URL;
+    
     // 构建URL查询参数
     const queryParams = new URLSearchParams();
     for (const key in params) {
@@ -209,7 +341,9 @@ function apiGet(endpoint, params = {}) {
     }
     
     const queryString = queryParams.toString();
-    const url = `${API_BASE_URL}${endpoint}${queryString ? '?' + queryString : ''}`;
+    const url = `${apiBaseUrl}${endpoint}${queryString ? '?' + queryString : ''}`;
+    
+    console.log('API GET请求:', url);
     
     // 设置请求头
     const headers = {
@@ -237,15 +371,15 @@ function apiGet(endpoint, params = {}) {
             // 处理401未授权错误
             if (response.status === 401) {
                 console.error('收到401未授权响应，但暂时禁用自动跳转');
-                // 临时测试方案：不跳转，只记录日志
-                /*
-                // 清除认证状态并重定向到登录页面
-                AppState.token = null;
-                AppState.user = null;
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_info');
-                window.location.href = 'login.html';
-                */
+                
+                // 显示友好的提示信息
+                const message = '会话已过期或未登录，请刷新页面或重新登录';
+                
+                // 创建一个悬浮提示
+                showAuthError(message);
+                
+                // 抛出特定错误
+                throw new Error(`未授权访问: ${message}`);
             }
             
             // 抛出错误以便调用者处理
@@ -270,6 +404,13 @@ function apiGet(endpoint, params = {}) {
  * @param {string} loadingElementId 加载指示器元素ID
  */
 function getRequest(url, successCallback, errorCallback, loadingElementId) {
+    // 确保URL有效
+    let requestUrl = url;
+    // 如果是相对路径且不以/api开头
+    if (!url.startsWith('http') && !url.startsWith('/api')) {
+        requestUrl = `${SERVER_URL}${url.startsWith('/') ? url : '/' + url}`;
+    }
+    
     // 显示加载指示器
     if (loadingElementId) {
         const loadingElement = document.getElementById(loadingElementId);
@@ -286,7 +427,7 @@ function getRequest(url, successCallback, errorCallback, loadingElementId) {
     }
     
     // 发送请求
-    fetch(url, {
+    fetch(requestUrl, {
         method: 'GET',
         headers: headers,
         credentials: 'include'
@@ -335,9 +476,11 @@ function getRequest(url, successCallback, errorCallback, loadingElementId) {
  * @returns {Promise} API响应Promise
  */
 function apiPost(endpoint, data = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
+    // 确保使用最新的API基础URL
+    const apiBaseUrl = window.API_BASE_URL || API_BASE_URL;
+    const url = `${apiBaseUrl}${endpoint}`;
     
-    console.log('API请求URL:', url);
+    console.log('API POST请求:', url);
     console.log('API请求数据:', data);
     
     // 设置请求头
@@ -357,7 +500,7 @@ function apiPost(endpoint, data = {}) {
     return fetch(url, {
         method: 'POST',
         headers: headers,
-        credentials: 'include', // 包含Cookie
+        credentials: 'include', // 跨域请求时包含凭据（Cookie等）
         body: JSON.stringify(data)
     })
     .then(response => {
@@ -367,15 +510,15 @@ function apiPost(endpoint, data = {}) {
             // 处理401未授权错误
             if (response.status === 401) {
                 console.error('收到401未授权响应，但暂时禁用自动跳转');
-                // 临时测试方案：不跳转，只记录日志
-                /*
-                // 清除认证状态并重定向到登录页面
-                AppState.token = null;
-                AppState.user = null;
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_info');
-                window.location.href = 'login.html';
-                */
+                
+                // 显示友好的提示信息
+                const message = '会话已过期或未登录，请刷新页面或重新登录';
+                
+                // 创建一个悬浮提示
+                showAuthError(message);
+                
+                // 抛出特定错误
+                throw new Error(`未授权访问: ${message}`);
             }
             
             // 尝试解析JSON响应，如果失败则返回普通错误
@@ -419,7 +562,12 @@ function apiPost(endpoint, data = {}) {
  * @returns {Promise} API响应Promise
  */
 function apiPut(endpoint, data = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
+    // 确保使用最新的API基础URL
+    const apiBaseUrl = window.API_BASE_URL || API_BASE_URL;
+    const url = `${apiBaseUrl}${endpoint}`;
+    
+    console.log('API PUT请求:', url);
+    console.log('API请求数据:', data);
     
     // 设置请求头
     const headers = {
@@ -447,28 +595,41 @@ function apiPut(endpoint, data = {}) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
-                console.error('PUT请求收到401未授权响应，但暂时禁用自动跳转');
-                // 临时测试方案：不跳转，只记录日志
-                /*
-                // 清除认证状态并重定向到登录页面
-                AppState.token = null;
-                AppState.user = null;
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_info');
-                window.location.href = 'login.html';
-                */
+                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                
+                // 显示友好的提示信息
+                const message = '会话已过期或未登录，请刷新页面或重新登录';
+                
+                // 创建一个悬浮提示
+                showAuthError(message);
+                
+                // 抛出特定错误
+                throw new Error(`未授权访问: ${message}`);
             }
             
-            return response.json().then(data => {
-                throw new Error(data.message || `请求失败: ${response.status}`);
-            });
+            // 尝试解析JSON响应，如果失败则返回普通错误
+            try {
+                return response.json().then(data => {
+                    throw new Error(data.message || `请求失败: ${response.status}`);
+                }).catch(e => {
+                    throw new Error(`请求失败(${response.status}): ${e.message}`);
+                });
+            } catch (e) {
+                throw new Error(`请求失败: ${response.status}`);
+            }
         }
         
-        return response.json();
+        // 尝试解析JSON响应
+        try {
+            return response.json();
+        } catch (e) {
+            console.error('解析响应JSON失败', e);
+            throw new Error('解析服务器响应失败');
+        }
     })
     .catch(error => {
         AppState.isLoading = false;
-        AppState.errors.push(error.message || '请求失败');
+        AppState.errors.push(error.message);
         console.error('API请求错误:', error);
         throw error;
     });
@@ -480,7 +641,11 @@ function apiPut(endpoint, data = {}) {
  * @returns {Promise} API响应Promise
  */
 function apiDelete(endpoint) {
-    const url = `${API_BASE_URL}${endpoint}`;
+    // 确保使用最新的API基础URL
+    const apiBaseUrl = window.API_BASE_URL || API_BASE_URL;
+    const url = `${apiBaseUrl}${endpoint}`;
+    
+    console.log('API DELETE请求:', url);
     
     // 设置请求头
     const headers = {
@@ -507,28 +672,33 @@ function apiDelete(endpoint) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
-                console.error('DELETE请求收到401未授权响应，但暂时禁用自动跳转');
-                // 临时测试方案：不跳转，只记录日志
-                /*
-                // 清除认证状态并重定向到登录页面
-                AppState.token = null;
-                AppState.user = null;
-                localStorage.removeItem('auth_token');
-                localStorage.removeItem('user_info');
-                window.location.href = 'login.html';
-                */
+                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                
+                // 显示友好的提示信息
+                const message = '会话已过期或未登录，请刷新页面或重新登录';
+                
+                // 创建一个悬浮提示
+                showAuthError(message);
+                
+                // 抛出特定错误
+                throw new Error(`未授权访问: ${message}`);
             }
             
-            return response.json().then(data => {
-                throw new Error(data.message || `请求失败: ${response.status}`);
-            });
+            // 抛出错误以便调用者处理
+            throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
         }
         
-        return response.json();
+        // 尝试解析JSON响应
+        try {
+            return response.json();
+        } catch (e) {
+            // 如果响应为空，返回一个成功标志
+            return { success: true };
+        }
     })
     .catch(error => {
         AppState.isLoading = false;
-        AppState.errors.push(error.message || '请求失败');
+        AppState.errors.push(error.message);
         console.error('API请求错误:', error);
         throw error;
     });
@@ -697,4 +867,77 @@ function confirmDialog(message) {
             resolve(true);
         });
     });
+}
+
+/**
+ * 显示认证错误提示
+ * @param {string} message 错误信息
+ */
+function showAuthError(message) {
+    // 检查是否已存在提示
+    let authError = document.getElementById('auth-error-toast');
+    
+    if (!authError) {
+        authError = document.createElement('div');
+        authError.id = 'auth-error-toast';
+        authError.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px 25px;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 10000;
+            max-width: 350px;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        // 添加登录按钮
+        const loginButton = document.createElement('button');
+        loginButton.textContent = '前往登录';
+        loginButton.style.cssText = `
+            display: block;
+            margin-top: 10px;
+            padding: 5px 15px;
+            background-color: #0275d8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        `;
+        
+        loginButton.addEventListener('click', function() {
+            window.location.href = 'login.html';
+        });
+        
+        // 添加关闭按钮
+        const closeButton = document.createElement('span');
+        closeButton.innerHTML = '&times;';
+        closeButton.style.cssText = `
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        `;
+        
+        closeButton.addEventListener('click', function() {
+            document.body.removeChild(authError);
+        });
+        
+        authError.appendChild(document.createTextNode(message));
+        authError.appendChild(loginButton);
+        authError.appendChild(closeButton);
+        
+        document.body.appendChild(authError);
+        
+        // 3秒后自动关闭
+        setTimeout(() => {
+            if (authError.parentNode) {
+                authError.parentNode.removeChild(authError);
+            }
+        }, 5000);
+    }
 } 

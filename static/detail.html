@@ -12,7 +12,7 @@
     <div class="container">
         <header class="header">
             <h1>智能陪护监控平台 > 老人详情</h1>
-            <div class="current-time" id="current-time">2024年4月18日 12:54:39</div>
+            <div class="current-time" id="current-time">2024/4/20 22:27:04</div>
         </header>
         
         <div class="back-link">
@@ -24,11 +24,57 @@
                 <!-- 基本信息区域 -->
                 <div class="panel basic-info">
                     <h2>基本信息</h2>
-                    <div class="info-content" id="senior-info">
-                        <div class="loading-indicator">
-                            <i class="bi bi-arrow-repeat"></i> 加载中...
+                    <div class="info-content">
+                        <div class="senior-profile">
+                            <div class="avatar-container">
+                                <img src="images/avatar.png" alt="头像" class="senior-avatar">
+                                <div class="senior-id">
+                                    <div class="senior-name">张大爷 <span class="gender-tag">中等风险</span></div>
+                                    <div class="senior-id-text">老人ID: 1</div>
+                                </div>
+                            </div>
                         </div>
-                        <!-- 老人基本信息将从服务器动态加载 -->
+                        
+                        <div class="senior-details">
+                            <div class="info-row">
+                                <div class="info-item">
+                                    <span class="info-label">性别:</span>
+                                    <span class="info-value">女</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">年龄:</span>
+                                    <span class="info-value">75岁</span>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-item">
+                                    <span class="info-label">地址:</span>
+                                    <span class="info-value">3号楼2单元501</span>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-item">
+                                    <span class="info-label">紧急联系人:</span>
+                                    <span class="info-value">李明（儿子）</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">联系电话:</span>
+                                    <span class="info-value">13912345678</span>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-item">
+                                    <span class="info-label">健康状况:</span>
+                                    <span class="info-value">高血压</span>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-item">
+                                    <span class="info-label">所属单位:</span>
+                                    <span class="info-value">福寿区、雅和苑</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -50,29 +96,83 @@
                 <!-- 今日活动统计 -->
                 <div class="panel activity-panel">
                     <h2>今日活动统计</h2>
-                    <div class="info-content" id="activity-stats">
-                        <div class="loading-indicator">
-                            <i class="bi bi-arrow-repeat"></i> 加载中...
+                    <div class="activity-content">
+                        <div class="activity-date">4/12023 活动概览</div>
+                        
+                        <div class="activity-stats-grid">
+                            <div class="activity-stat-item">
+                                <div class="stat-value">7.5</div>
+                                <div class="stat-label">睡眠时长(小时)</div>
+                            </div>
+                            
+                            <div class="activity-stat-item">
+                                <div class="stat-value">4.2</div>
+                                <div class="stat-label">户外活动(小时)</div>
+                            </div>
+                            
+                            <div class="activity-stat-item">
+                                <div class="stat-value">3</div>
+                                <div class="stat-label">门窗开关</div>
+                            </div>
+                            
+                            <div class="activity-stat-item">
+                                <div class="stat-value">1.2L</div>
+                                <div class="stat-label">饮水</div>
+                            </div>
+                            
+                            <div class="activity-stat-item">
+                                <div class="stat-value">1.5小时</div>
+                                <div class="stat-label">就餐</div>
+                            </div>
+                            
+                            <div class="activity-stat-item">
+                                <div class="stat-value">5</div>
+                                <div class="stat-label">如厕次数</div>
+                            </div>
                         </div>
-                        <!-- 活动统计将从服务器动态加载 -->
+                        
+                        <div class="total-steps">
+                            <div class="steps-value">2,450</div>
+                            <div class="steps-label">步数</div>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- 异常记录 -->
                 <div class="panel alert-records">
                     <h2>异常记录</h2>
-                    <div class="record-list" id="alert-list">
-                        <div class="loading-indicator">
-                            <i class="bi bi-arrow-repeat"></i> 加载中...
+                    <div class="record-list">
+                        <div class="alert-item high-risk">
+                            <div class="alert-time">4/19 22:54</div>
+                            <div class="alert-text">检测到可能跌倒风险</div>
                         </div>
-                        <!-- 异常记录将从服务器动态加载 -->
+                        
+                        <div class="alert-item medium-risk">
+                            <div class="alert-time">4/19 15:36</div>
+                            <div class="alert-text">长时间未检测到活动</div>
+                        </div>
+                        
+                        <div class="alert-item high-risk">
+                            <div class="alert-time">4/19 12:56</div>
+                            <div class="alert-text">老人监测到异常动作</div>
+                        </div>
+                        
+                        <div class="alert-item medium-risk">
+                            <div class="alert-time">4/18 20:49</div>
+                            <div class="alert-text">老人长时间未离开房间</div>
+                        </div>
+                        
+                        <div class="alert-item high-risk">
+                            <div class="alert-time">4/18 10:36</div>
+                            <div class="alert-text">监测到姿势异常</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
         
         <nav class="navigation">
-            <a href="index.html" class="nav-item">仪表盘</a>
+            <a href="index.html" class="nav-item">首页</a>
             <a href="detail.html" class="nav-item active">老人详情</a>
             <a href="video.html" class="nav-item">视频监控</a>
             <a href="settings.html" class="nav-item">系统设置</a>

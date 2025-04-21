@@ -8,6 +8,170 @@
     <link rel="stylesheet" href="css/style.css">
     <!-- 引入ECharts库 -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <!-- 引入高德地图API -->
+    <script>
+        window._AMapSecurityConfig = {
+            securityJsCode: '16416ac4dba0235758ad72ff13058526' // 修改为服务器端API调用的安全码
+        }
+    </script>
+    <script type="text/javascript">
+        // 添加一个全局变量跟踪地图加载状态
+        let mapLoaded = false;
+        
+        // 添加超时处理
+        let mapLoadTimeout;
+        
+        function loadAMap() {
+            // 检查浏览器支持
+            if (!checkBrowserSupport()) {
+                console.error('浏览器不支持地图功能');
+                handleMapLoadError();
+                return;
+            }
+            
+            // 首先显示加载状态
+            const mapContainer = document.getElementById('amap-container');
+            if (mapContainer) {
+                mapContainer.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                        <i class="bi bi-map" style="font-size: 36px; margin-bottom: 10px;"></i>
+                        <p>正在加载地图...</p>
+                    </div>
+                `;
+            }
+            
+            // 设置20秒超时
+            mapLoadTimeout = setTimeout(function() {
+                console.error('地图加载超时');
+                if (!mapLoaded) {
+                    handleMapLoadError();
+                }
+            }, 20000);
+
+            // 检查网络连接
+            if (!navigator.onLine) {
+                console.error('当前处于离线状态，无法加载地图');
+                clearTimeout(mapLoadTimeout);
+                handleMapLoadError();
+                return;
+            }
+
+            try {
+                // 尝试清理之前的地图资源
+                if (typeof window.destroyMap === 'function') {
+                    window.destroyMap();
+                }
+                
+                var script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.async = true;
+                script.onerror = function(error) {
+                    console.error('地图脚本加载失败:', error);
+                    clearTimeout(mapLoadTimeout);
+                    handleMapLoadError();
+                };
+                script.onload = function() {
+                    clearTimeout(mapLoadTimeout);
+                    console.log('地图脚本加载成功');
+                };
+                // 使用Web端（JS API）的Key
+                script.src = 'https://webapi.amap.com/maps?v=2.0&key=bcd35feed546fa9b13211d11801e9c03&plugin=AMap.Geolocation,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar&callback=initAMap&t=' + new Date().getTime();
+                document.head.appendChild(script);
+            } catch (error) {
+                console.error('加载地图脚本时发生错误:', error);
+                clearTimeout(mapLoadTimeout);
+                handleMapLoadError();
+            }
+        }
+
+        function handleMapLoadError() {
+            const mapContainer = document.getElementById('amap-container');
+            if (mapContainer) {
+                mapContainer.innerHTML = `
+                    <div class="map-error">
+                        <i class="bi bi-exclamation-triangle" style="font-size: 24px; color: #ff6b6b; margin-bottom: 10px;"></i>
+                        <p>地图服务暂时不可用</p>
+                        <p style="font-size: 14px; opacity: 0.8; margin: 10px 0;">已显示昆明理工大学附近的默认医疗设施</p>
+                        <button onclick="reloadMap()">重新加载地图</button>
+                    </div>
+                `;
+            }
+            
+            // 确保最近医院信息区域显示默认医院
+            updateDefaultHospitalInfo();
+        }
+
+        function updateDefaultHospitalInfo() {
+            const nearestHospitalElement = document.querySelector('.nearest-hospital');
+            if (nearestHospitalElement) {
+                nearestHospitalElement.innerHTML = `
+                    <h4>最近医疗设施</h4>
+                    <div class="nearest-info">
+                        <div class="hospital-name">
+                            <i class="bi bi-hospital"></i>昆明医科大学第一附属医院
+                        </div>
+                        <div class="hospital-address">
+                            <i class="bi bi-geo-alt"></i>云南省昆明市西昌路295号
+                        </div>
+                        <div class="hospital-distance">
+                            <i class="bi bi-signpost-2"></i>2000米
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 检查浏览器支持
+        function checkBrowserSupport() {
+            // 检查必要的API
+            if (!window.localStorage || !window.JSON || !navigator.geolocation) {
+                console.warn('浏览器不支持必要的API');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // 重新加载地图
+        function reloadMap() {
+            // 清理之前的超时
+            clearTimeout(mapLoadTimeout);
+            // 重置状态
+            mapLoaded = false;
+            // 重新加载
+            loadAMap();
+        }
+
+        // 添加网络状态监听
+        window.addEventListener('online', function() {
+            console.log('网络已连接，重新加载地图');
+            reloadMap();
+        });
+
+        window.addEventListener('offline', function() {
+            console.log('网络已断开');
+            handleMapLoadError();
+        });
+        
+        // 页面离开时清理资源
+        window.addEventListener('beforeunload', function() {
+            if (typeof window.destroyMap === 'function') {
+                window.destroyMap();
+            }
+        });
+    </script>
+    <style>
+        .amap-container {
+            width: 100%;
+            height: 280px;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .hospital-info {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -41,32 +205,29 @@
                 <div class="chart-container" id="status-chart"></div>
             </div>
             
-            <!-- 中央数据显示区域 -->
+            <!-- 中央面板 -->
             <div class="panel central-panel">
-                <h2>数据集中显示</h2>
-                <div class="globe-container" id="globe-container">
-                    <!-- 默认中央数据 -->
-                    <div class="central-data">
-                        <div class="data-summary">
-                            <div class="summary-item">
-                                <div class="summary-value" id="seniors-online">3</div>
-                                <div class="summary-label">在线老人</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-value" id="devices-connected">5</div>
-                                <div class="summary-label">已连接设备</div>
-                            </div>
-                            <div class="summary-item">
-                                <div class="summary-value" id="abnormal-events">0</div>
-                                <div class="summary-label">异常事件</div>
-                            </div>
-                        </div>
-                        <div class="connection-status">
-                            <i class="bi bi-wifi"></i> 系统运行中
+                <h2>实时监控</h2>
+                <div class="globe-container">
+                    <div id="amap-container" style="width: 100%; height: 100%;">
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
+                            <i class="bi bi-map" style="font-size: 36px; margin-bottom: 10px;"></i>
+                            <p>正在加载地图...</p>
                         </div>
                     </div>
-                    <div class="loading-indicator" id="center-loading" style="display:none;">
-                        <i class="bi bi-arrow-repeat"></i> 加载中...
+                </div>
+                <div class="nearest-hospital">
+                    <h4>最近医疗设施</h4>
+                    <div class="nearest-info">
+                        <div class="hospital-name">
+                            <i class="bi bi-hospital"></i>昆明医科大学第一附属医院
+                        </div>
+                        <div class="hospital-address">
+                            <i class="bi bi-geo-alt"></i>云南省昆明市西昌路295号
+                        </div>
+                        <div class="hospital-distance">
+                            <i class="bi bi-signpost-2"></i>2000米
+                        </div>
                     </div>
                 </div>
             </div>
@@ -232,6 +393,22 @@
     </div>
     
     <script src="js/common.js"></script>
+    <script src="js/amap.js"></script>
     <script src="js/main.js"></script>
+    <script>
+        // 页面加载完成后加载高德地图
+        document.addEventListener('DOMContentLoaded', loadAMap);
+        
+        // 添加页面可见性变化事件处理
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // 页面从隐藏状态恢复时，检查地图状态
+                if (!mapLoaded && document.getElementById('amap-container')) {
+                    console.log('页面重新可见，检查地图状态');
+                    reloadMap();
+                }
+            }
+        });
+    </script>
 </body>
 </html>

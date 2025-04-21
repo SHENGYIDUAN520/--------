@@ -91,6 +91,48 @@ function initTabSwitching() {
 
 // 初始化表单处理
 function initForms() {
+    // 服务器配置表单
+    const serverConfigForm = document.getElementById('serverConfigForm');
+    if (serverConfigForm) {
+        // 加载当前服务器配置
+        loadServerConfig();
+        
+        serverConfigForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+            if (!serverUrl) {
+                showToast('服务器地址不能为空', 'error');
+                return;
+            }
+            
+            // 保存服务器配置
+            try {
+                const config = {
+                    serverUrl: serverUrl,
+                    updatedAt: new Date().toISOString()
+                };
+                localStorage.setItem('server_config', JSON.stringify(config));
+                localStorage.setItem('serverUrl', serverUrl); // 兼容性保存
+                
+                showToast('服务器配置已保存', 'success');
+                
+                // 测试连接
+                testServerConnection(serverUrl);
+            } catch (error) {
+                showToast(`保存服务器配置失败: ${error.message}`, 'error');
+            }
+        });
+        
+        // 快速设置按钮
+        const setLocalServerBtn = document.getElementById('setLocalServer');
+        if (setLocalServerBtn) {
+            setLocalServerBtn.addEventListener('click', function() {
+                document.getElementById('serverUrl').value = 'http://localhost:5000';
+            });
+        }
+    }
+    
     // 个人信息表单提交
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
@@ -249,104 +291,176 @@ function checkPasswordStrength(password) {
     return Math.min(2, strength);
 }
 
-// 初始化模态窗口
+// 初始化模态窗口处理
 function initModals() {
-    // 打开模态窗口的按钮
-    const modalTriggers = document.querySelectorAll('[data-modal]');
-    modalTriggers.forEach(trigger => {
-        trigger.addEventListener('click', function() {
+    console.log('初始化模态窗口处理...');
+    
+    // 获取所有模态窗口
+    const modals = document.querySelectorAll('.modal');
+    
+    // 为所有触发模态窗口的按钮添加事件
+    document.querySelectorAll('[data-modal]').forEach(button => {
+        button.addEventListener('click', function() {
             const modalId = this.getAttribute('data-modal');
             const modal = document.getElementById(modalId);
             
             if (modal) {
-                openModal(modal);
+                // 清空表单
+                clearModalForm(modal);
                 
-                // 如果是编辑按钮，填充数据
+                // 设置模态窗口的标题（新增）
+                const modalHeader = modal.querySelector('.modal-header h2');
+                if (modalHeader) {
+                    if (this.classList.contains('btn-edit')) {
+                        if (modalId === 'elderly-modal') {
+                            modalHeader.textContent = '编辑老人信息';
+                        } else if (modalId === 'contact-modal') {
+                            modalHeader.textContent = '编辑联系人';
+                        }
+                    } else {
+                        if (modalId === 'elderly-modal') {
+                            modalHeader.textContent = '添加老人';
+                        } else if (modalId === 'contact-modal') {
+                            modalHeader.textContent = '添加联系人';
+                        }
+                    }
+                }
+                
+                // 如果是编辑按钮，需要填充表单
                 if (this.classList.contains('btn-edit')) {
                     const listItem = this.closest('.list-item');
                     if (listItem) {
+                        // 获取条目ID并填充表单
+                        const itemId = listItem.getAttribute('data-id');
                         populateModalForm(modal, listItem);
                     }
-                }
-            }
-        });
-    });
-    
-    // 关闭模态窗口的按钮
-    const closeBtns = document.querySelectorAll('.close-btn, .modal-footer .btn-danger');
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            if (modal) {
-                closeModal(modal);
-            }
-        });
-    });
-    
-    // 模态窗口提交按钮
-    const submitBtns = document.querySelectorAll('.modal-footer .btn-primary');
-    submitBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const modal = this.closest('.modal');
-            const form = modal.querySelector('form');
-            
-            if (form && form.checkValidity()) {
-                // 模拟表单提交
-                const formId = form.id;
-                
-                if (formId === 'elderlyForm') {
-                    saveElderlyData(form);
-                } else if (formId === 'contactForm') {
-                    saveContactData(form);
+                } else {
+                    // 新增模式，需要重置表单
+                    if (modalId === 'contact-modal') {
+                        // 加载老人下拉选项
+                        loadSeniorOptions();
+                    }
                 }
                 
-                closeModal(modal);
-            } else {
-                // 触发浏览器原生表单验证
-                form.reportValidity();
+                // 打开模态窗口
+                openModal(modal);
             }
         });
     });
     
-    // 点击模态窗口外部关闭
-    const modals = document.querySelectorAll('.modal');
+    // 关闭按钮处理
     modals.forEach(modal => {
+        // 关闭按钮
+        const closeBtn = modal.querySelector('.close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => closeModal(modal));
+        }
+        
+        // 取消按钮
+        const cancelBtn = modal.querySelector('.modal-footer .btn-danger');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => closeModal(modal));
+        }
+        
+        // 保存按钮
+        const saveBtn = modal.querySelector('.modal-footer .btn-primary');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function() {
+                // 获取表单
+                const modalId = modal.id;
+                const form = modal.querySelector('form');
+                
+                // 执行表单验证
+                if (form && validateForm(form)) {
+                    if (modalId === 'elderly-modal') {
+                        saveElderlyData(form);
+                    } else if (modalId === 'contact-modal') {
+                        saveContactData(form);
+                    }
+                    closeModal(modal);
+                }
+            });
+        }
+        
+        // 点击背景关闭
         modal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal(this);
+            if (e.target === modal) {
+                closeModal(modal);
             }
         });
     });
+}
+
+// 清空模态窗口表单
+function clearModalForm(modal) {
+    const form = modal.querySelector('form');
+    if (form) {
+        form.reset();
+        
+        // 清空隐藏字段
+        const hiddenFields = form.querySelectorAll('input[type="hidden"]');
+        hiddenFields.forEach(field => field.value = '');
+    }
+}
+
+// 验证表单
+function validateForm(form) {
+    const requiredFields = form.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('error');
+            
+            // 添加错误提示
+            let errorMsg = field.nextElementSibling;
+            if (!errorMsg || !errorMsg.classList.contains('error-message')) {
+                errorMsg = document.createElement('small');
+                errorMsg.className = 'error-message';
+                field.parentNode.insertBefore(errorMsg, field.nextSibling);
+            }
+            errorMsg.textContent = '此字段不能为空';
+        } else {
+            field.classList.remove('error');
+            const errorMsg = field.nextElementSibling;
+            if (errorMsg && errorMsg.classList.contains('error-message')) {
+                errorMsg.textContent = '';
+            }
+        }
+    });
+    
+    return isValid;
 }
 
 // 打开模态窗口
 function openModal(modal) {
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden'; // 防止背景滚动
+    if (!modal) return;
     
-    // 重置表单
-    const form = modal.querySelector('form');
-    if (form) {
-        form.reset();
-    }
+    // 阻止页面滚动
+    document.body.style.overflow = 'hidden';
     
-    // 更新标题
-    const isEdit = document.activeElement && document.activeElement.classList.contains('btn-edit');
-    const header = modal.querySelector('.modal-header h2');
-    if (header) {
-        const modalId = modal.id;
-        if (modalId === 'elderly-modal') {
-            header.textContent = isEdit ? '编辑老人信息' : '添加老人';
-        } else if (modalId === 'contact-modal') {
-            header.textContent = isEdit ? '编辑联系人' : '添加联系人';
+    // 显示模态窗口
+    modal.classList.add('show');
+    
+    // 焦点到第一个输入框
+    setTimeout(() => {
+        const firstInput = modal.querySelector('input:not([type="hidden"])');
+        if (firstInput) {
+            firstInput.focus();
         }
-    }
+    }, 300);
 }
 
 // 关闭模态窗口
 function closeModal(modal) {
-    modal.classList.remove('active');
+    if (!modal) return;
+    
+    // 恢复页面滚动
     document.body.style.overflow = '';
+    
+    // 隐藏模态窗口
+    modal.classList.remove('show');
 }
 
 // 填充模态窗口表单数据
@@ -387,6 +501,131 @@ function populateModalForm(modal, listItem) {
     }
 }
 
+// 加载老人列表
+function loadElderlyList() {
+    const container = document.getElementById('elderly-data-container');
+    const loadingIndicator = document.querySelector('#elderly-list .loading-indicator');
+    const emptyState = document.querySelector('#elderly-list .empty-state');
+    
+    if (!container) return;
+    
+    // 显示加载指示器
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    container.innerHTML = '';
+    
+    // 从API获取老人列表
+    apiGet('/seniors')
+        .then(response => {
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            
+            if (!response || response.length === 0) {
+                // 尝试从本地存储获取老人数据
+                const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+                
+                if (localSeniors.length > 0) {
+                    // 渲染本地存储的老人列表
+                    renderElderlyList(localSeniors);
+                    return;
+                }
+                
+                // 显示空状态
+                if (emptyState) emptyState.style.display = 'block';
+                return;
+            }
+            
+            // 渲染老人列表
+            renderElderlyList(response);
+        })
+        .catch(error => {
+            console.error('获取老人列表失败:', error);
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            
+            // 尝试从本地存储获取数据
+            const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+            
+            if (localSeniors.length > 0) {
+                renderElderlyList(localSeniors);
+                showToast('使用本地存储的老人数据', 'info');
+                return;
+            }
+            
+            if (emptyState) {
+                emptyState.style.display = 'block';
+                const emptyText = emptyState.querySelector('p');
+                if (emptyText) emptyText.textContent = '获取数据失败，请刷新重试';
+            }
+        });
+}
+
+// 渲染老人列表
+function renderElderlyList(seniors) {
+    const container = document.getElementById('elderly-data-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    seniors.forEach(senior => {
+        const listItem = document.createElement('div');
+        listItem.className = 'list-item';
+        listItem.setAttribute('data-id', senior.id);
+        
+        const genderIcon = senior.gender === 'male' ? 'bi-gender-male' : 'bi-gender-female';
+        const genderClass = senior.gender === 'male' ? 'male' : 'female';
+        
+        listItem.innerHTML = `
+            <div class="item-info">
+                <h4 class="item-title">
+                    <i class="bi ${genderIcon} ${genderClass}"></i> ${senior.name}
+                </h4>
+                <p class="item-description">
+                    年龄：${senior.age} | 
+                    紧急联系人：${senior.emergency_contact || '未设置'}
+                </p>
+            </div>
+            <div class="item-actions">
+                <button class="btn btn-icon btn-edit" title="编辑信息" data-modal="elderly-modal">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-icon btn-delete" title="删除">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        container.appendChild(listItem);
+        bindListItemEvents(listItem);
+    });
+}
+
+// 删除老人信息
+function deleteElderly(id) {
+    if (!confirm('确定要删除这位老人的信息吗？此操作不可恢复。')) {
+        return;
+    }
+    
+    apiDelete(`/seniors/${id}`)
+        .then(response => {
+            showToast('老人信息已成功删除', 'success');
+            
+            // 同时从本地存储中删除
+            const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+            const updatedSeniors = localSeniors.filter(senior => senior.id != id);
+            localStorage.setItem('local_seniors', JSON.stringify(updatedSeniors));
+            
+            loadElderlyList(); // 重新加载老人列表
+        })
+        .catch(error => {
+            // 尝试从本地存储中删除
+            const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+            const updatedSeniors = localSeniors.filter(senior => senior.id != id);
+            localStorage.setItem('local_seniors', JSON.stringify(updatedSeniors));
+            
+            showToast('老人信息已从本地存储中删除', 'success');
+            loadElderlyList(); // 重新加载老人列表
+        });
+}
+
 // 保存老人数据
 function saveElderlyData(form) {
     const elderlyId = document.getElementById('elderlyId').value;
@@ -409,107 +648,188 @@ function saveElderlyData(form) {
     
     if (elderlyId) {
         // 更新现有老人信息
+        seniorData.id = elderlyId;
         apiPromise = apiPut(`/seniors/${elderlyId}`, seniorData)
             .then(response => {
                 showToast('老人信息已成功更新', 'success');
+                
+                // 同时更新本地存储
+                updateLocalSenior(seniorData);
+                
                 loadElderlyList(); // 重新加载老人列表
             });
     } else {
         // 添加新老人
+        seniorData.id = new Date().getTime().toString(); // 生成临时ID
         apiPromise = apiPost('/seniors', seniorData)
             .then(response => {
+                // 如果API返回了ID，使用API返回的ID
+                if (response && response.id) {
+                    seniorData.id = response.id;
+                }
+                
                 showToast('新老人信息已成功添加', 'success');
+                
+                // 同时添加到本地存储
+                addLocalSenior(seniorData);
+                
                 loadElderlyList(); // 重新加载老人列表
             });
     }
     
     apiPromise.catch(error => {
-        showToast(`操作失败: ${error.message}`, 'error');
+        console.error('API操作失败，使用本地存储:', error);
+        
+        if (elderlyId) {
+            // 更新本地存储中的老人信息
+            updateLocalSenior(seniorData);
+        } else {
+            // 添加到本地存储
+            addLocalSenior(seniorData);
+        }
+        
+        showToast('数据已保存到本地', 'info');
+        loadElderlyList(); // 重新加载老人列表
     });
 }
 
-// 加载老人列表
-function loadElderlyList() {
-    const container = document.getElementById('elderly-data-container');
-    const loadingIndicator = document.querySelector('#elderly-list .loading-indicator');
-    const emptyState = document.querySelector('#elderly-list .empty-state');
+// 添加老人到本地存储
+function addLocalSenior(seniorData) {
+    const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+    localSeniors.push(seniorData);
+    localStorage.setItem('local_seniors', JSON.stringify(localSeniors));
+}
+
+// 更新本地存储中的老人信息
+function updateLocalSenior(seniorData) {
+    const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+    const index = localSeniors.findIndex(senior => senior.id == seniorData.id);
+    
+    if (index !== -1) {
+        localSeniors[index] = seniorData;
+    } else {
+        localSeniors.push(seniorData);
+    }
+    
+    localStorage.setItem('local_seniors', JSON.stringify(localSeniors));
+}
+
+// 加载联系人列表（实际上是加载老人的紧急联系人信息）
+function loadContactList() {
+    const container = document.getElementById('contact-data-container');
+    const loadingIndicator = document.querySelector('#contact-list .loading-indicator');
+    const emptyState = document.querySelector('#contact-list .empty-state');
     
     if (!container) return;
     
     // 显示加载指示器
-    if (loadingIndicator) loadingIndicator.style.display = 'flex';
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
     if (emptyState) emptyState.style.display = 'none';
     container.innerHTML = '';
     
-    // 从API获取老人列表
+    // 从API获取老人列表，提取联系人信息
     apiGet('/seniors')
         .then(response => {
             if (loadingIndicator) loadingIndicator.style.display = 'none';
             
-            if (!response || response.length === 0) {
+            let seniors = response;
+            
+            // 如果API没有返回数据，尝试从本地存储获取
+            if (!seniors || seniors.length === 0) {
+                seniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+            }
+            
+            // 过滤出有紧急联系人的老人
+            const seniorsWithContacts = seniors.filter(senior => 
+                senior.emergency_contact && senior.emergency_contact.trim() !== ''
+            );
+            
+            if (seniorsWithContacts.length === 0) {
                 // 显示空状态
-                if (emptyState) emptyState.style.display = 'flex';
+                if (emptyState) emptyState.style.display = 'block';
                 return;
             }
             
-            // 渲染老人列表
-            response.forEach(senior => {
-                const listItem = document.createElement('div');
-                listItem.className = 'list-item';
-                listItem.setAttribute('data-id', senior.id);
-                
-                const genderIcon = senior.gender === 'male' ? 'bi-gender-male' : 'bi-gender-female';
-                const genderClass = senior.gender === 'male' ? 'male' : 'female';
-                
-                listItem.innerHTML = `
-                    <div class="item-content">
-                        <h4 class="item-title">
-                            <i class="bi ${genderIcon} ${genderClass}"></i> ${senior.name}
-                        </h4>
-                        <p class="item-description">
-                            年龄：${senior.age} | 
-                            紧急联系人：${senior.emergency_contact || '未设置'}
-                        </p>
-                    </div>
-                    <div class="item-actions">
-                        <button class="btn btn-icon btn-edit" title="编辑信息" data-modal="elderly-modal">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-icon btn-delete" title="删除">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                container.appendChild(listItem);
-                bindListItemEvents(listItem);
-            });
+            // 渲染联系人列表
+            renderContactList(seniorsWithContacts);
         })
         .catch(error => {
-            console.error('获取老人列表失败:', error);
+            console.error('获取联系人列表失败:', error);
             if (loadingIndicator) loadingIndicator.style.display = 'none';
+            
+            // 尝试从本地存储获取数据
+            const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+            
+            // 过滤出有紧急联系人的老人
+            const seniorsWithContacts = localSeniors.filter(senior => 
+                senior.emergency_contact && senior.emergency_contact.trim() !== ''
+            );
+            
+            if (seniorsWithContacts.length > 0) {
+                renderContactList(seniorsWithContacts);
+                showToast('使用本地存储的联系人数据', 'info');
+                return;
+            }
+            
             if (emptyState) {
-                emptyState.style.display = 'flex';
+                emptyState.style.display = 'block';
                 const emptyText = emptyState.querySelector('p');
                 if (emptyText) emptyText.textContent = '获取数据失败，请刷新重试';
             }
         });
 }
 
-// 删除老人信息
-function deleteElderly(id) {
-    if (!confirm('确定要删除这位老人的信息吗？此操作不可恢复。')) {
-        return;
-    }
+// 渲染联系人列表
+function renderContactList(seniorsWithContacts) {
+    const container = document.getElementById('contact-data-container');
+    if (!container) return;
     
-    apiDelete(`/seniors/${id}`)
-        .then(response => {
-            showToast('老人信息已成功删除', 'success');
-            loadElderlyList(); // 重新加载老人列表
-        })
-        .catch(error => {
-            showToast(`删除失败: ${error.message}`, 'error');
+    container.innerHTML = '';
+    
+    seniorsWithContacts.forEach(senior => {
+        const listItem = document.createElement('div');
+        listItem.className = 'list-item';
+        listItem.setAttribute('data-id', senior.id);
+        
+        const contactName = senior.emergency_contact || '未命名联系人';
+        const relation = senior.emergency_relation || '未指定';
+        const phone = senior.emergency_phone || '未设置';
+        const phoneDisplay = phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+        
+        listItem.innerHTML = `
+            <div class="item-info">
+                <h4 class="item-title">
+                    <i class="bi bi-person"></i> ${contactName}
+                </h4>
+                <p class="item-description">
+                    关系：${relation} | 电话：${phoneDisplay} | 关联老人：${senior.name}
+                </p>
+            </div>
+            <div class="item-actions">
+                <button class="btn btn-icon btn-call" title="拨打电话" data-phone="${phone}">
+                    <i class="bi bi-telephone"></i>
+                </button>
+                <button class="btn btn-icon btn-edit" title="编辑信息" data-modal="contact-modal">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </div>
+        `;
+        
+        container.appendChild(listItem);
+        bindListItemEvents(listItem);
+    });
+    
+    // 添加电话拨打功能
+    document.querySelectorAll('.btn-call').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const phone = this.getAttribute('data-phone');
+            if (phone && phone !== '未设置') {
+                window.location.href = `tel:${phone}`;
+            } else {
+                showToast('电话号码未设置', 'warning');
+            }
         });
+    });
 }
 
 // 保存联系人数据
@@ -536,117 +856,36 @@ function saveContactData(form) {
     apiPut(`/seniors/${seniorId}`, seniorData)
         .then(response => {
             showToast('联系人信息已成功保存', 'success');
+            
+            // 更新本地存储中的老人联系人信息
+            updateLocalSeniorContact(seniorId, seniorData);
+            
             loadContactList(); // 重新加载联系人列表
             loadElderlyList(); // 同时更新老人列表显示
         })
         .catch(error => {
-            showToast(`保存失败: ${error.message}`, 'error');
+            console.error('API操作失败，使用本地存储:', error);
+            
+            // 更新本地存储中的老人联系人信息
+            updateLocalSeniorContact(seniorId, seniorData);
+            
+            showToast('联系人数据已保存到本地', 'info');
+            loadContactList(); // 重新加载联系人列表
+            loadElderlyList(); // 同时更新老人列表显示
         });
 }
 
-// 加载联系人列表（实际上是加载老人的紧急联系人信息）
-function loadContactList() {
-    const container = document.getElementById('contact-data-container');
-    const loadingIndicator = document.querySelector('#contact-list .loading-indicator');
-    const emptyState = document.querySelector('#contact-list .empty-state');
+// 更新本地存储中的老人联系人信息
+function updateLocalSeniorContact(seniorId, contactData) {
+    const localSeniors = JSON.parse(localStorage.getItem('local_seniors') || '[]');
+    const index = localSeniors.findIndex(senior => senior.id == seniorId);
     
-    if (!container) return;
-    
-    // 显示加载指示器
-    if (loadingIndicator) loadingIndicator.style.display = 'flex';
-    if (emptyState) emptyState.style.display = 'none';
-    container.innerHTML = '';
-    
-    // 同时加载老人下拉列表选项
-    try {
-        loadSeniorOptions();
-    } catch (error) {
-        console.error('加载老人选项失败:', error);
+    if (index !== -1) {
+        localSeniors[index].emergency_contact = contactData.emergency_contact;
+        localSeniors[index].emergency_phone = contactData.emergency_phone;
+        localSeniors[index].emergency_relation = contactData.emergency_relation;
+        localStorage.setItem('local_seniors', JSON.stringify(localSeniors));
     }
-    
-    // 从API获取老人列表，筛选出有紧急联系人的老人
-    apiGet('/seniors')
-        .then(response => {
-            if (loadingIndicator) loadingIndicator.style.display = 'none';
-            
-            if (!response || response.length === 0) {
-                // 显示空状态
-                if (emptyState) emptyState.style.display = 'flex';
-                return;
-            }
-            
-            // 筛选出有紧急联系人信息的老人
-            const seniorsWithContacts = response.filter(senior => 
-                senior.emergency_contact && senior.emergency_phone);
-            
-            if (seniorsWithContacts.length === 0) {
-                // 显示空状态
-                if (emptyState) emptyState.style.display = 'flex';
-                return;
-            }
-            
-            // 渲染联系人列表
-            seniorsWithContacts.forEach(senior => {
-                if (!senior || !senior.emergency_contact) return;
-                
-                const listItem = document.createElement('div');
-                listItem.className = 'list-item';
-                listItem.setAttribute('data-id', senior.id);
-                listItem.setAttribute('data-contact', senior.emergency_contact);
-                listItem.setAttribute('data-phone', senior.emergency_phone);
-                
-                listItem.innerHTML = `
-                    <div class="item-content">
-                        <h4 class="item-title">
-                            <i class="bi bi-person-fill"></i> ${senior.emergency_contact}
-                        </h4>
-                        <p class="item-description">
-                            电话：${senior.emergency_phone} | 关联老人：${senior.name}
-                        </p>
-                    </div>
-                    <div class="item-actions">
-                        <button class="btn btn-icon btn-edit" title="编辑联系人" data-modal="contact-modal" data-senior-id="${senior.id}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-icon btn-call" title="拨打电话">
-                            <i class="bi bi-telephone"></i>
-                        </button>
-                    </div>
-                `;
-                
-                container.appendChild(listItem);
-                
-                // 绑定按钮事件
-                const editBtn = listItem.querySelector('.btn-edit');
-                if (editBtn) {
-                    editBtn.addEventListener('click', function() {
-                        // 填充表单数据
-                        document.getElementById('contactId').value = 'edit'; // 标记为编辑模式
-                        document.getElementById('contactName').value = senior.emergency_contact;
-                        document.getElementById('contactPhone').value = senior.emergency_phone;
-                        document.getElementById('contactRelation').value = senior.emergency_relation || '';
-                        document.getElementById('contactSeniorId').value = senior.id;
-                    });
-                }
-                
-                const callBtn = listItem.querySelector('.btn-call');
-                if (callBtn) {
-                    callBtn.addEventListener('click', function() {
-                        // 模拟拨打电话
-                        showToast(`正在拨打电话: ${senior.emergency_phone}`, 'info');
-                    });
-                }
-            });
-        })
-        .catch(error => {
-            console.error('获取联系人列表失败:', error);
-            if (loadingIndicator) loadingIndicator.style.display = 'none';
-            if (emptyState) {
-                emptyState.style.display = 'flex';
-                const emptyText = emptyState.querySelector('p');
-                if (emptyText) emptyText.textContent = '获取数据失败，请刷新重试';
-            }
-        });
 }
 
 // 加载老人选项到下拉列表
@@ -780,148 +1019,158 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// 添加CSS样式
-const toastCSS = `
+// 生成并添加toast样式
+let toastCSS = `
+/* Toast的样式 */
 .toast-container {
     position: fixed;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     z-index: 9999;
 }
 
 .toast {
-    padding: 12px 20px;
-    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 15px;
     border-radius: 4px;
-    color: white;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-    font-weight: 500;
-}
-
-.toast.show {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-.toast.success {
-    background-color: var(--success-color);
-}
-
-.toast.error {
-    background-color: var(--danger-color);
-}
-
-.toast.warning {
-    background-color: var(--warning-color);
-    color: #333;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    animation: fadeIn 0.3s ease;
+    width: 300px;
+    transition: all 0.3s ease;
 }
 
 .toast.info {
-    background-color: var(--primary-color);
+    background-color: #f8f9fa;
+    border-left: 4px solid #0d6efd;
 }
 
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(3px);
+.toast.success {
+    background-color: #d1e7dd;
+    border-left: 4px solid #198754;
 }
 
-.modal.active {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: modalBackdropFadeIn 0.3s;
+.toast.warning {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
 }
 
-@keyframes modalBackdropFadeIn {
-    from {
-        background-color: rgba(0, 0, 0, 0);
-        backdrop-filter: blur(0);
-    }
-    to {
-        background-color: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(3px);
-    }
+.toast.error {
+    background-color: #f8d7da;
+    border-left: 4px solid #dc3545;
 }
 
-.modal-content {
-    background-color: white;
-    width: 100%;
-    max-width: 500px;
-    border-radius: 8px;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.25);
-    animation: modalFadeIn 0.3s;
-    overflow: hidden;
-}
-
-@keyframes modalFadeIn {
+@keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(-50px) scale(0.95);
+        transform: translateY(-20px);
     }
     to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
     }
 }
 
-.modal-header {
-    padding: 20px 25px;
-    border-bottom: 1px solid #e8e8e8;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* 连接状态样式 */
+.connection-status {
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 5px;
 }
 
-.modal-header h2 {
-    margin: 0;
-    font-size: 1.4rem;
-    color: #333;
+.connection-status .unknown {
+    color: #6c757d;
 }
 
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 1.8rem;
-    cursor: pointer;
-    color: #666;
-    transition: all 0.2s;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+.connection-status .testing {
+    color: #0dcaf0;
 }
 
-.close-btn:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-    color: #333;
+.connection-status .success {
+    color: #198754;
 }
 
-.modal-body {
-    padding: 25px;
+.connection-status .error {
+    color: #dc3545;
 }
 
-.modal-footer {
-    padding: 15px 25px;
-    border-top: 1px solid #e8e8e8;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+.connection-status i {
+    margin-right: 5px;
 }
-`;
 
-// 添加样式到页面
-const styleElement = document.createElement('style');
+/* 添加旋转动画 */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.connection-status .testing i {
+    animation: spin 1s linear infinite;
+}`;
+
+let styleElement = document.createElement('style');
 styleElement.textContent = toastCSS;
-document.head.appendChild(styleElement); 
+document.head.appendChild(styleElement);
+
+// 加载服务器配置
+function loadServerConfig() {
+    const serverUrlInput = document.getElementById('serverUrl');
+    if (!serverUrlInput) return;
+    
+    try {
+        // 从localStorage获取配置
+        const configStr = localStorage.getItem('server_config');
+        if (configStr) {
+            const config = JSON.parse(configStr);
+            if (config && config.serverUrl) {
+                serverUrlInput.value = config.serverUrl;
+                return;
+            }
+        }
+        
+        // 如果没有server_config，检查兼容格式
+        const serverUrl = localStorage.getItem('serverUrl');
+        if (serverUrl) {
+            serverUrlInput.value = serverUrl;
+            return;
+        }
+        
+        // 默认设置为localhost
+        serverUrlInput.value = 'http://localhost:5000';
+    } catch (error) {
+        console.error('加载服务器配置失败:', error);
+        serverUrlInput.value = 'http://localhost:5000';
+    }
+}
+
+// 测试服务器连接
+function testServerConnection(serverUrl) {
+    const connectionStatusElem = document.getElementById('connectionStatus');
+    if (connectionStatusElem) {
+        connectionStatusElem.innerHTML = '<span class="testing"><i class="bi bi-arrow-repeat"></i> 测试连接中...</span>';
+    }
+    
+    fetch(`${serverUrl}/api/health`, { 
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        timeout: 5000
+    })
+    .then(response => {
+        if (response.ok) {
+            if (connectionStatusElem) {
+                connectionStatusElem.innerHTML = '<span class="success"><i class="bi bi-check-circle"></i> 连接成功</span>';
+            }
+            showToast('服务器连接测试成功', 'success');
+        } else {
+            if (connectionStatusElem) {
+                connectionStatusElem.innerHTML = `<span class="error"><i class="bi bi-exclamation-triangle"></i> 连接失败: HTTP ${response.status}</span>`;
+            }
+            showToast(`服务器连接测试失败: HTTP ${response.status}`, 'error');
+        }
+    })
+    .catch(error => {
+        if (connectionStatusElem) {
+            connectionStatusElem.innerHTML = `<span class="error"><i class="bi bi-exclamation-triangle"></i> 连接失败: ${error.message}</span>`;
+        }
+        showToast(`服务器连接测试失败: ${error.message}`, 'error');
+    });
+} 

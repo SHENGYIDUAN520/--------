@@ -18,7 +18,7 @@ function initDetailPage() {
     setInterval(updateCurrentTime, 1000);
     
     // 从localStorage获取服务器地址
-    serverUrl = localStorage.getItem('serverUrl') || 'http://47.97.160.91:5000';
+    serverUrl = localStorage.getItem('serverUrl') || 'http://localhost:5000';
     
     // 设置视频控制按钮事件监听器
     btnConnectVideo.addEventListener('click', toggleVideoConnection);
@@ -29,15 +29,8 @@ function initDetailPage() {
 // 更新当前时间
 function updateCurrentTime() {
     const now = new Date();
-    const options = { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    };
-    document.getElementById('current-time').textContent = now.toLocaleDateString('zh-CN', options);
+    const timeString = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+    document.getElementById('current-time').textContent = timeString;
 }
 
 // 切换视频连接状态
@@ -193,5 +186,5 @@ function toggleDetailFullscreen() {
     }
 }
 
-// 页面加载时初始化
+// 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', initDetailPage); 
