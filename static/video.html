@@ -24,8 +24,8 @@
             <div class="panel control-panel">
                 <div class="control-item">
                     <div class="device-status">
-                        <span class="status-label">摄像头状态:</span>
-                        <span class="status-value online">在线</span>
+                        <span class="status-label">视频状态:</span>
+                        <span class="status-value" id="camera-status">未播放</span>
                     </div>
                 </div>
                 
@@ -45,9 +45,9 @@
             <!-- 视频监控主区域 -->
             <div class="panel video-main-panel">
                 <div class="video-header">
-                    <h2><i class="bi bi-camera-video"></i> 实时监控</h2>
+                    <h2><i class="bi bi-camera-video"></i> 视频监控</h2>
                     <div class="video-status">
-                        <span class="status-badge online"><i class="bi bi-reception-4"></i> 在线</span>
+                        <span class="status-badge" id="stream-status">未播放</span>
                         <span class="resolution-info">1080P</span>
                     </div>
                 </div>
@@ -55,20 +55,24 @@
                 <div class="video-player-container">
                     <div class="video-player">
                         <div id="video-stream" class="video-stream">
-                            <div class="video-placeholder">
+                            <div class="video-placeholder" id="video-placeholder">
                                 <i class="bi bi-camera-video-fill"></i>
-                                <p>视频加载中...或点击开始连接</p>
+                                <p>点击播放按钮开始播放视频</p>
                             </div>
-                            <!-- 实际项目中这里将显示来自K230的视频流 -->
+                            <!-- 替换为HTML5视频元素 -->
+                            <video id="video-player" controls style="display:none; width:100%; height:100%; object-fit:contain;">
+                                <source src="videos/demo1.mp4" type="video/mp4">
+                                您的浏览器不支持HTML5视频
+                            </video>
                         </div>
                     </div>
                     
                     <div class="video-controls">
-                        <button class="control-btn" id="btn-connect">
-                            <i class="bi bi-play-fill"></i> 连接
+                        <button class="control-btn" id="btn-play">
+                            <i class="bi bi-play-fill"></i> 播放
                         </button>
-                        <button class="control-btn" id="btn-disconnect" disabled>
-                            <i class="bi bi-pause-fill"></i> 断开
+                        <button class="control-btn" id="btn-pause" disabled>
+                            <i class="bi bi-pause-fill"></i> 暂停
                         </button>
                         <button class="control-btn" id="btn-fullscreen">
                             <i class="bi bi-fullscreen"></i>
@@ -84,36 +88,54 @@
             <!-- 摄像头信息 -->
             <div class="panel video-side-panel">
                 <div class="side-panel-header">
-                    <h3>摄像头状态</h3>
+                    <h3>视频信息</h3>
                 </div>
                 
                 <div class="camera-status">
                     <div class="status-item">
-                        <span class="status-label">设备型号:</span>
-                        <span class="status-value">GC2093-200W</span>
+                        <span class="status-label">视频文件名:</span>
+                        <span class="status-value" id="video-name">demo1.mp4</span>
                     </div>
                     <div class="status-item">
                         <span class="status-label">分辨率:</span>
                         <span class="status-value">1920×1080</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">帧率:</span>
-                        <span class="status-value">25fps</span>
+                        <span class="status-label">当前播放时间:</span>
+                        <span class="status-value" id="current-play-time">00:00</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">连接状态:</span>
-                        <span class="status-value online">在线</span>
+                        <span class="status-label">播放状态:</span>
+                        <span class="status-value" id="connection-status">未播放</span>
                     </div>
                 </div>
                 
                 <div class="side-panel-header">
-                    <h3>录像回放</h3>
+                    <h3>视频列表</h3>
                 </div>
                 
                 <div class="recording-list" id="recording-list">
-                    <!-- 录像列表将从服务器动态加载 -->
-                    <div class="loading-indicator">
-                        <i class="bi bi-arrow-repeat"></i> 加载中...
+                    <!-- 本地视频列表 -->
+                    <div class="video-list-item" data-video="demo1.mp4">
+                        <div class="video-thumb"><i class="bi bi-file-earmark-play"></i></div>
+                        <div class="video-info">
+                            <div class="video-title">demo1.mp4</div>
+                            <div class="video-duration">01:25</div>
+                        </div>
+                    </div>
+                    <div class="video-list-item" data-video="demo2.mp4">
+                        <div class="video-thumb"><i class="bi bi-file-earmark-play"></i></div>
+                        <div class="video-info">
+                            <div class="video-title">demo2.mp4</div>
+                            <div class="video-duration">02:10</div>
+                        </div>
+                    </div>
+                    <div class="video-list-item" data-video="demo3.mp4">
+                        <div class="video-thumb"><i class="bi bi-file-earmark-play"></i></div>
+                        <div class="video-info">
+                            <div class="video-title">demo3.mp4</div>
+                            <div class="video-duration">03:45</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -122,12 +144,253 @@
         <nav class="navigation">
             <a href="index.html" class="nav-item">首页</a>
             <a href="detail.html" class="nav-item">老人详情</a>
-            <a href="history.html" class="nav-item active">视频监控</a>
+            <a href="video.html" class="nav-item active">视频监控</a>
             <a href="settings.html" class="nav-item">系统设置</a>
         </nav>
     </div>
     
     <script src="js/common.js"></script>
-    <script src="js/video.js"></script>
+    <!-- 添加视频处理专用JS -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 全局变量
+        let isPlaying = false;
+        let currentVideoSrc = 'demo1.mp4';
+        let updateTimeInterval = null;
+        
+        // 获取DOM元素
+        const btnPlay = document.getElementById('btn-play');
+        const btnPause = document.getElementById('btn-pause');
+        const btnFullscreen = document.getElementById('btn-fullscreen');
+        const btnSnapshot = document.getElementById('btn-snapshot');
+        const btnStartRecording = document.getElementById('btn-start-recording');
+        const btnStopRecording = document.getElementById('btn-stop-recording');
+        const videoPlayer = document.getElementById('video-player');
+        const videoPlaceholder = document.getElementById('video-placeholder');
+        const cameraStatus = document.getElementById('camera-status');
+        const streamStatus = document.getElementById('stream-status');
+        const connectionStatus = document.getElementById('connection-status');
+        const currentPlayTime = document.getElementById('current-play-time');
+        const videoName = document.getElementById('video-name');
+        const volumeSlider = document.getElementById('volume-slider');
+        const videoListItems = document.querySelectorAll('.video-list-item');
+        
+        // 更新UI状态
+        function updateUIState(playing) {
+            if (playing) {
+                btnPlay.disabled = true;
+                btnPause.disabled = false;
+                btnSnapshot.disabled = false;
+                btnStartRecording.disabled = false;
+                videoPlaceholder.style.display = 'none';
+                videoPlayer.style.display = 'block';
+                streamStatus.textContent = '播放中';
+                streamStatus.className = 'status-badge online';
+                cameraStatus.textContent = '播放中';
+                cameraStatus.className = 'status-value online';
+                connectionStatus.textContent = '播放中';
+                connectionStatus.className = 'status-value online';
+            } else {
+                btnPlay.disabled = false;
+                btnPause.disabled = true;
+                btnSnapshot.disabled = true;
+                btnStartRecording.disabled = true;
+                btnStopRecording.disabled = true;
+                if (!videoPlayer.src) {
+                    videoPlaceholder.style.display = 'flex';
+                    videoPlayer.style.display = 'none';
+                }
+                streamStatus.textContent = '未播放';
+                streamStatus.className = 'status-badge';
+                cameraStatus.textContent = '未播放';
+                cameraStatus.className = 'status-value';
+                connectionStatus.textContent = '未播放';
+                connectionStatus.className = 'status-value';
+            }
+        }
+        
+        // 更新视频播放时间
+        function startTimeUpdater() {
+            if (updateTimeInterval) {
+                clearInterval(updateTimeInterval);
+            }
+            
+            updateTimeInterval = setInterval(() => {
+                if (videoPlayer.paused) return;
+                
+                const minutes = Math.floor(videoPlayer.currentTime / 60);
+                const seconds = Math.floor(videoPlayer.currentTime % 60);
+                currentPlayTime.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        // 停止时间更新
+        function stopTimeUpdater() {
+            if (updateTimeInterval) {
+                clearInterval(updateTimeInterval);
+                updateTimeInterval = null;
+            }
+            currentPlayTime.textContent = '00:00';
+        }
+        
+        // 播放视频
+        function playVideo() {
+            // 设置视频源
+            const videoPrefix = 'videos/';
+            if (!videoPlayer.src.includes(currentVideoSrc)) {
+                videoPlayer.src = videoPrefix + currentVideoSrc;
+            }
+            
+            videoPlayer.volume = volumeSlider.value / 100;
+            videoPlayer.play().then(() => {
+                isPlaying = true;
+                updateUIState(true);
+                startTimeUpdater();
+            }).catch(error => {
+                console.error('播放视频失败:', error);
+                alert('无法播放视频，请检查视频文件是否存在');
+                isPlaying = false;
+                updateUIState(false);
+            });
+        }
+        
+        // 暂停视频
+        function pauseVideo() {
+            videoPlayer.pause();
+            isPlaying = false;
+            updateUIState(false);
+        }
+        
+        // 截图功能
+        function takeSnapshot() {
+            if (!isPlaying || videoPlayer.paused) {
+                alert('无法截图：视频未播放');
+                return;
+            }
+            
+            try {
+                // 创建临时画布
+                const canvas = document.createElement('canvas');
+                canvas.width = videoPlayer.videoWidth;
+                canvas.height = videoPlayer.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+                
+                // 转换为图片并下载
+                const dataUrl = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                a.download = `智能陪护监控_截图_${timestamp}.png`;
+                a.href = dataUrl;
+                a.click();
+            } catch (error) {
+                console.error('截图失败:', error);
+                alert('截图失败，请稍后再试');
+            }
+        }
+        
+        // 全屏功能
+        function toggleFullscreen() {
+            const videoElement = document.querySelector('.video-player');
+            
+            if (!document.fullscreenElement) {
+                if (videoElement.requestFullscreen) {
+                    videoElement.requestFullscreen();
+                } else if (videoElement.webkitRequestFullscreen) {
+                    videoElement.webkitRequestFullscreen();
+                } else if (videoElement.msRequestFullscreen) {
+                    videoElement.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+        
+        // 录制功能模拟
+        function startRecording() {
+            btnStartRecording.disabled = true;
+            btnStopRecording.disabled = false;
+            alert('开始录制视频...');
+            // 实际项目中这里应该调用API开始录制
+        }
+        
+        function stopRecording() {
+            btnStartRecording.disabled = false;
+            btnStopRecording.disabled = true;
+            alert('视频录制已完成！');
+            // 实际项目中这里应该调用API停止录制
+        }
+        
+        // 切换视频源
+        function changeVideoSource(videoSrc) {
+            // 先暂停当前视频
+            if (isPlaying) {
+                pauseVideo();
+            }
+            
+            // 更新视频源
+            currentVideoSrc = videoSrc;
+            videoName.textContent = videoSrc;
+            
+            // 更新视频源
+            videoPlayer.src = 'videos/' + videoSrc;
+            
+            // 重置时间显示
+            currentPlayTime.textContent = '00:00';
+            
+            // 自动播放新视频
+            playVideo();
+        }
+        
+        // 音量控制
+        volumeSlider.addEventListener('input', function() {
+            videoPlayer.volume = this.value / 100;
+        });
+        
+        // 视频结束事件
+        videoPlayer.addEventListener('ended', function() {
+            isPlaying = false;
+            updateUIState(false);
+            stopTimeUpdater();
+        });
+        
+        // 事件监听
+        btnPlay.addEventListener('click', playVideo);
+        btnPause.addEventListener('click', pauseVideo);
+        btnFullscreen.addEventListener('click', toggleFullscreen);
+        btnSnapshot.addEventListener('click', takeSnapshot);
+        btnStartRecording.addEventListener('click', startRecording);
+        btnStopRecording.addEventListener('click', stopRecording);
+        
+        // 视频选择器事件
+        videoListItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const videoSrc = this.getAttribute('data-video');
+                changeVideoSource(videoSrc);
+            });
+        });
+        
+        // 页面关闭时清理资源
+        window.addEventListener('beforeunload', () => {
+            if (videoPlayer) {
+                videoPlayer.pause();
+            }
+            stopTimeUpdater();
+        });
+        
+        // 初始化UI状态
+        updateUIState(false);
+        
+        // 预先加载第一个视频
+        videoPlayer.src = 'videos/' + currentVideoSrc;
+        videoName.textContent = currentVideoSrc;
+    });
+    </script>
 </body>
 </html> 

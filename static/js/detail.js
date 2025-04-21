@@ -1,190 +1,159 @@
 // 智能陪护监控平台 - 老人详情页面脚本
 
 // 全局变量
-let isVideoConnected = false;
-let videoRefreshInterval = null;
+let isVideoPlaying = false;
 let serverUrl = '';
 
 // DOM元素
 const videoElement = document.getElementById('detail-video-stream');
-const btnConnectVideo = document.getElementById('btn-connect-video');
+const videoPlayer = document.getElementById('detail-video-player');
+const videoPlaceholder = document.getElementById('video-placeholder-detail');
+const btnPlayDetail = document.getElementById('btn-play-detail');
+const btnPauseDetail = document.getElementById('btn-pause-detail');
 const btnSnapshotDetail = document.getElementById('btn-snapshot-detail');
 const btnFullscreenDetail = document.getElementById('btn-fullscreen-detail');
 
+// 时间更新
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    }).replace(/\//g, '/');
+    
+    document.getElementById('current-time').textContent = timeString;
+}
+
+// 初始更新时间
+updateTime();
+
+// 每秒更新时间
+setInterval(updateTime, 1000);
+
 // 初始化函数
 function initDetailPage() {
-    // 更新当前时间
-    updateCurrentTime();
-    setInterval(updateCurrentTime, 1000);
-    
     // 从localStorage获取服务器地址
     serverUrl = localStorage.getItem('serverUrl') || 'http://localhost:5000';
     
     // 设置视频控制按钮事件监听器
-    btnConnectVideo.addEventListener('click', toggleVideoConnection);
+    btnPlayDetail.addEventListener('click', playDetailVideo);
+    btnPauseDetail.addEventListener('click', pauseDetailVideo);
     btnSnapshotDetail.addEventListener('click', takeDetailSnapshot);
     btnFullscreenDetail.addEventListener('click', toggleDetailFullscreen);
 }
 
-// 更新当前时间
-function updateCurrentTime() {
-    const now = new Date();
-    const timeString = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-    document.getElementById('current-time').textContent = timeString;
-}
-
-// 切换视频连接状态
-function toggleVideoConnection() {
-    if (isVideoConnected) {
-        disconnectDetailVideo();
+// 更新UI状态
+function updateDetailVideoUI(playing) {
+    if (playing) {
+        videoPlaceholder.style.display = 'none';
+        videoPlayer.style.display = 'block';
+        btnPlayDetail.disabled = true;
+        btnPauseDetail.disabled = false;
+        btnSnapshotDetail.disabled = false;
     } else {
-        connectDetailVideo();
+        if (!videoPlayer.src) {
+            videoPlaceholder.style.display = 'block';
+            videoPlayer.style.display = 'none';
+        }
+        btnPlayDetail.disabled = false;
+        btnPauseDetail.disabled = true;
+        btnSnapshotDetail.disabled = true;
     }
 }
 
-// 连接视频流
-function connectDetailVideo() {
-    if (isVideoConnected) return;
-    
-    // 更新UI状态
-    btnConnectVideo.textContent = '断开';
-    videoElement.innerHTML = '<div class="connecting-indicator">正在连接...</div>';
-    
-    // 开始刷新图像
-    videoRefreshInterval = setInterval(refreshDetailImage, 1000);
-    
-    // 更新状态
-    isVideoConnected = true;
-}
-
-// 断开视频流
-function disconnectDetailVideo() {
-    if (!isVideoConnected) return;
-    
-    // 停止刷新图像
-    if (videoRefreshInterval) {
-        clearInterval(videoRefreshInterval);
-        videoRefreshInterval = null;
+// 播放视频
+function playDetailVideo() {
+    // 确保视频源已设置
+    if (!videoPlayer.src) {
+        videoPlayer.src = 'videos/demo1.mp4';
     }
     
-    // 恢复占位符
-    videoElement.innerHTML = '<div class="placeholder-video">点击连接摄像头</div>';
-    
-    // 更新状态
-    isVideoConnected = false;
-    btnConnectVideo.textContent = '连接';
+    videoPlayer.play().then(() => {
+        isVideoPlaying = true;
+        updateDetailVideoUI(true);
+    }).catch(error => {
+        console.error('视频播放失败:', error);
+        alert('无法播放视频，请检查视频文件是否存在');
+        isVideoPlaying = false;
+        updateDetailVideoUI(false);
+    });
 }
 
-// 刷新图像
-function refreshDetailImage() {
-    if (!isVideoConnected) return;
-    
-    fetch(`${serverUrl}/api/image-info`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('获取图像信息失败');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                console.error('获取图像信息错误:', data.error);
-                return;
-            }
-            
-            // 构建图像URL，添加时间戳防止缓存
-            const imageUrl = `${serverUrl}${data.path}?t=${Date.now()}`;
-            
-            // 检查是否已经有图像元素
-            let imgElement = videoElement.querySelector('img');
-            
-            if (!imgElement) {
-                // 创建新的图像元素
-                videoElement.innerHTML = '';
-                imgElement = document.createElement('img');
-                imgElement.classList.add('detail-video-feed');
-                videoElement.appendChild(imgElement);
-            }
-            
-            // 更新图像
-            imgElement.src = imageUrl;
-            
-            // 更新时间戳显示
-            const timestampElement = videoElement.querySelector('.video-timestamp') || document.createElement('div');
-            timestampElement.className = 'video-timestamp';
-            timestampElement.textContent = data.formatted_time;
-            
-            if (!videoElement.querySelector('.video-timestamp')) {
-                videoElement.appendChild(timestampElement);
-            }
-        })
-        .catch(error => {
-            console.error('获取最新图像失败:', error);
-            
-            // 如果多次失败，断开连接
-            if (isVideoConnected && error.toString().includes('获取图像信息失败')) {
-                disconnectDetailVideo();
-            }
+// 暂停视频
+function pauseDetailVideo() {
+    videoPlayer.pause();
+    isVideoPlaying = false;
+    updateDetailVideoUI(false);
+}
+
+// 全屏功能
+function toggleDetailFullscreen() {
+    if (!document.fullscreenElement) {
+        videoElement.requestFullscreen().catch(err => {
+            console.error(`全屏错误: ${err.message}`);
         });
+    } else {
+        document.exitFullscreen();
+    }
 }
 
-// 拍照
+// 截图功能
 function takeDetailSnapshot() {
-    if (!isVideoConnected) {
-        alert('请先连接到视频流');
+    if (!isVideoPlaying || videoPlayer.paused) {
+        alert('无法截图：视频未播放');
         return;
     }
     
-    // 创建全屏遮罩
-    const overlay = document.createElement('div');
-    overlay.className = 'snapshot-overlay';
-    document.body.appendChild(overlay);
-    
-    // 添加闪光效果
-    overlay.style.opacity = '1';
-    setTimeout(() => {
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-            overlay.remove();
-        }, 300);
-    }, 100);
-    
-    // 显示成功消息
-    const msgContainer = document.createElement('div');
-    msgContainer.className = 'snapshot-message';
-    msgContainer.textContent = '已保存截图';
-    document.body.appendChild(msgContainer);
-    
-    setTimeout(() => {
-        msgContainer.style.opacity = '0';
-        setTimeout(() => {
-            msgContainer.remove();
-        }, 300);
-    }, 2000);
-}
-
-// 全屏显示
-function toggleDetailFullscreen() {
-    const videoContainer = videoElement.parentElement;
-    
-    if (!document.fullscreenElement) {
-        if (videoContainer.requestFullscreen) {
-            videoContainer.requestFullscreen();
-        } else if (videoContainer.webkitRequestFullscreen) {
-            videoContainer.webkitRequestFullscreen();
-        } else if (videoContainer.msRequestFullscreen) {
-            videoContainer.msRequestFullscreen();
-        }
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
+    try {
+        // 创建临时画布
+        const canvas = document.createElement('canvas');
+        canvas.width = videoPlayer.videoWidth;
+        canvas.height = videoPlayer.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+        
+        // 转换为图片并下载
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        a.download = `智能陪护监控_截图_${timestamp}.png`;
+        a.href = dataUrl;
+        a.click();
+    } catch (error) {
+        console.error('截图失败:', error);
+        alert('截图失败，请稍后再试');
     }
 }
 
+// 视频结束事件处理
+function handleVideoEnded() {
+    isVideoPlaying = false;
+    updateDetailVideoUI(false);
+}
+
 // 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', initDetailPage); 
+document.addEventListener('DOMContentLoaded', function() {
+    // 初始化UI状态
+    updateDetailVideoUI(false);
+    
+    // 添加视频结束事件监听
+    videoPlayer.addEventListener('ended', handleVideoEnded);
+    
+    // 按钮事件
+    btnPlayDetail.addEventListener('click', playDetailVideo);
+    btnPauseDetail.addEventListener('click', pauseDetailVideo);
+    btnSnapshotDetail.addEventListener('click', takeDetailSnapshot);
+    btnFullscreenDetail.addEventListener('click', toggleDetailFullscreen);
+    
+    // 页面关闭时暂停视频
+    window.addEventListener('beforeunload', function() {
+        if (videoPlayer && !videoPlayer.paused) {
+            videoPlayer.pause();
+        }
+    });
+}); 

@@ -1,6 +1,7 @@
 # 基础依赖
-flask==2.3.3
-flask-cors==4.0.0
+flask==2.0.1
+flask-cors==3.0.10
+flask-sock==0.6.0
 pymysql==1.1.0
 bcrypt==4.0.1
 python-dotenv==1.0.0
@@ -10,6 +11,10 @@ jsonschema==4.19.1
 simplejson==3.19.2
 
 # 图像处理（可选，用于K230开发板图像处理部分）
-opencv-python>=4.8.0
-numpy>=1.24.0
-pillow>=10.0.0 
+numpy==1.23.5
+opencv-python==4.6.0.66
+pillow>=10.0.0
+
+# 其他依赖
+Werkzeug==2.0.2
+simple-websocket==0.10.0 

@@ -10,11 +10,20 @@ import json
 from datetime import datetime, timedelta
 from functools import wraps
 import random
+import socket
+import struct
+import threading
+import numpy as np
+import cv2
+import base64
+from flask_sock import Sock  # 添加WebSocket支持
+import time
 
 # 导入数据库API模块
 from database import api
 
 app = Flask(__name__, static_folder='static')
+sock = Sock(app)  # 初始化WebSocket
 # 完善CORS配置，启用credentials支持，指定允许的源、方法和头部
 CORS(app, 
      supports_credentials=True, 
@@ -603,6 +612,21 @@ def generate_mock_data():
     }
 
 # API路由
+@app.route('/api/image-info', methods=['GET'])
+def get_image_info():
+    global latest_frame
+    
+    with frame_lock:
+        has_frame = latest_frame is not None
+    
+    return jsonify({
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "hasFrame": has_frame,
+        "frameStatus": "正常" if has_frame else "无数据",
+        "resolution": "1920x1080",
+        "fps": 25
+    })
+
 @app.route('/api/seniors/status')
 def get_senior_status():
     return jsonify({
@@ -674,5 +698,135 @@ def get_contacts():
         }
     ])
 
+# 全局变量用于存储最新帧
+latest_frame = None
+frame_lock = threading.Lock()
+
+# 接收视频流线程函数
+def video_receiver():
+    global latest_frame
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    
+    try:
+        # 修改为与庐山派main.py中相同的端口(5000)
+        server.bind(('0.0.0.0', 5000))
+        server.listen(1)
+        print("视频接收服务已启动，等待连接... (监听端口: 5000)")
+        
+        while True:
+            print("等待K230庐山派连接...")
+            conn, addr = server.accept()
+            print(f"视频流连接成功，来自: {addr}")
+            
+            try:
+                frame_count = 0
+                while True:
+                    # 读取4字节长度头部(与庐山派main.py中的struct.pack('!I', len(jpeg_buf))匹配)
+                    header_data = conn.recv(4)
+                    if len(header_data) != 4:
+                        print(f"接收头数据不完整，仅接收到 {len(header_data)} 字节，连接可能已断开")
+                        break
+                    
+                    # 解析图像数据长度
+                    frame_size = struct.unpack('!I', header_data)[0]
+                    
+                    # 接收JPEG图像数据
+                    data = b''
+                    bytes_received = 0
+                    start_time = time.time()
+                    
+                    while bytes_received < frame_size:
+                        chunk_size = min(8192, frame_size - bytes_received)
+                        packet = conn.recv(chunk_size)
+                        if not packet:
+                            print(f"接收数据中断，已接收 {bytes_received}/{frame_size} 字节")
+                            break
+                            
+                        data += packet
+                        bytes_received += len(packet)
+                        
+                        # 超时检测
+                        if time.time() - start_time > 5:  # 5秒超时
+                            print(f"接收数据超时，已接收 {bytes_received}/{frame_size} 字节")
+                            break
+                    
+                    # 验证是否接收完整
+                    if len(data) != frame_size:
+                        print(f"数据不完整，需要 {frame_size} 字节，实际接收 {len(data)} 字节")
+                        continue
+                    
+                    # 直接解码JPEG数据(庐山派发送的是已压缩的JPEG)
+                    try:
+                        img_array = np.frombuffer(data, dtype=np.uint8)
+                        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+                        
+                        if img is None:
+                            print("解码图像失败")
+                            continue
+                            
+                        # 转换为Base64用于WebSocket发送
+                        _, buffer = cv2.imencode('.jpg', img)
+                        frame_count += 1
+                        with frame_lock:
+                            latest_frame = base64.b64encode(buffer).decode('utf-8')
+                            
+                        # 每10帧打印一次日志
+                        if frame_count % 10 == 0:
+                            print(f"成功处理 {frame_count} 帧，大小: {frame_size} 字节")
+                            
+                    except Exception as e:
+                        print(f"图像处理错误: {e}")
+                        
+            except ConnectionResetError:
+                print(f"连接被重置: {addr}")
+            except ConnectionAbortedError:
+                print(f"连接被中断: {addr}")
+            except socket.timeout:
+                print(f"连接超时: {addr}")
+            except Exception as e:
+                print(f"视频流处理异常: {e}")
+                import traceback
+                traceback.print_exc()
+            finally:
+                print(f"关闭与 {addr} 的连接")
+                conn.close()
+                with frame_lock:
+                    latest_frame = None  # 清除视频帧
+                
+    except OSError as e:
+        print(f"端口绑定错误: {e}")
+    except Exception as e:
+        print(f"视频流服务异常: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        server.close()
+        print("视频接收服务已停止")
+
+# WebSocket路由处理视频流分发
+@sock.route('/ws/video')
+def video_stream(ws):
+    print("WebSocket客户端已连接")
+    last_sent_frame = None
+    
+    try:
+        while True:
+            with frame_lock:
+                current_frame = latest_frame
+            
+            # 只有当有新帧时才发送
+            if current_frame is not None and current_frame != last_sent_frame:
+                ws.send(current_frame)
+                last_sent_frame = current_frame
+            
+            # 短暂休眠避免CPU占用过高
+            time.sleep(0.03)  # 约30FPS
+    except Exception as e:
+        print(f"WebSocket错误: {e}")
+
+# 启动视频接收线程
+threading.Thread(target=video_receiver, daemon=True).start()
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5001, debug=True) 
