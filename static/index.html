@@ -11,8 +11,27 @@
     <!-- 引入高德地图API -->
     <script>
         window._AMapSecurityConfig = {
-            securityJsCode: '16416ac4dba0235758ad72ff13058526' // 修改为服务器端API调用的安全码
+            securityJsCode: '42fcf51dfa53ae877db9de46b5002250' // 更新为截图中显示的正确安全密钥
         }
+    </script>
+    <!-- 添加Canvas性能优化 -->
+    <script>
+        // 重写CanvasRenderingContext2D的getImageData方法，添加willReadFrequently标记
+        (function() {
+            // 保存原始的HTMLCanvasElement.prototype.getContext方法
+            const originalGetContext = HTMLCanvasElement.prototype.getContext;
+            
+            // 重写getContext方法，为2d上下文添加willReadFrequently选项
+            HTMLCanvasElement.prototype.getContext = function(contextType, contextAttributes) {
+                contextAttributes = contextAttributes || {};
+                if (contextType === '2d') {
+                    contextAttributes.willReadFrequently = true;
+                }
+                return originalGetContext.call(this, contextType, contextAttributes);
+            };
+            
+            console.log('已添加Canvas性能优化');
+        })();
     </script>
     <script type="text/javascript">
         // 添加一个全局变量跟踪地图加载状态
@@ -74,8 +93,9 @@
                     clearTimeout(mapLoadTimeout);
                     console.log('地图脚本加载成功');
                 };
-                // 使用Web端（JS API）的Key
-                script.src = 'https://webapi.amap.com/maps?v=2.0&key=bcd35feed546fa9b13211d11801e9c03&plugin=AMap.Geolocation,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar&callback=initAMap&t=' + new Date().getTime();
+                // 使用2.0版本API，使用CDN加载，添加时间戳防止缓存问题
+                let apiKey = 'bcd35feed546fa9b13211d11801e9c03';
+                script.src = `https://webapi.amap.com/maps?v=2.0&key=${apiKey}&plugin=AMap.Geolocation,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar,AMap.InfoWindow&callback=initAMap&t=${new Date().getTime()}`;
                 document.head.appendChild(script);
             } catch (error) {
                 console.error('加载地图脚本时发生错误:', error);
@@ -385,9 +405,15 @@
                 </div>
             </div>
             <div class="alert-actions">
-                <button class="btn btn-ignore" onclick="dismissAlert()">忽略</button>
-                <button class="btn btn-confirm" onclick="confirmAlert()">确认并通知</button>
-                <button class="btn btn-emergency" onclick="emergencyCall()">紧急呼叫</button>
+                <button class="btn btn-ignore" onclick="dismissAlert()">
+                    <i class="bi bi-x-circle"></i> 忽略
+                </button>
+                <button class="btn btn-confirm" onclick="confirmAlert()">
+                    <i class="bi bi-check-circle"></i> 确认并通知
+                </button>
+                <button class="btn btn-emergency" onclick="emergencyCall()">
+                    <i class="bi bi-telephone-fill"></i> 紧急呼叫
+                </button>
             </div>
         </div>
     </div>

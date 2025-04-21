@@ -29,18 +29,19 @@ a:hover {
 }
 
 .btn {
-    display: inline-block;
-    padding: 8px 16px;
-    background-color: #1976d2;
-    color: #fff;
+    padding: 10px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.btn:hover {
-    background-color: #1565c0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .btn-primary {
@@ -308,19 +309,7 @@ body {
     margin-left: 10px;
 }
 
-.btn-call {
-    background-color: var(--accent-blue);
-    color: white;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-}
-
-.btn-emergency {
+.contact-action .btn-emergency {
     background-color: var(--accent-red);
     color: white;
     width: 36px;
@@ -330,6 +319,17 @@ body {
     align-items: center;
     justify-content: center;
     padding: 0;
+    animation: none;
+    border: none;
+    box-shadow: none;
+    text-shadow: none;
+    min-width: 0;
+}
+
+.contact-action .btn-emergency:hover {
+    background-color: #ff1744;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(211, 47, 47, 0.5);
 }
 
 /* 导航栏样式 */
@@ -435,20 +435,8 @@ body {
     padding: 20px;
     display: flex;
     gap: 12px;
-    justify-content: flex-end;
+    justify-content: center;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    min-width: 100px;
-    text-align: center;
 }
 
 .btn-ignore {
@@ -461,15 +449,46 @@ body {
     color: white;
 }
 
-.btn-emergency {
-    background-color: #dc3545;
+/* 弹窗中的紧急呼叫按钮样式 */
+.alert-actions .btn-emergency {
+    background: linear-gradient(135deg, #ff3547 0%, #d32f2f 100%);
     color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    animation: pulse 2s infinite;
+    min-width: 120px;
 }
 
-.btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+@keyframes pulse {
+    0% {
+        box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(255, 53, 71, 0.7);
+    }
+    100% {
+        box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+    }
+}
+
+.alert-actions .btn-emergency:hover {
+    background: linear-gradient(135deg, #ff5252 0%, #ff1744 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(211, 47, 47, 0.5);
+    animation: none;
+}
+
+.alert-actions .btn-emergency:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(211, 47, 47, 0.4);
+}
+
+.alert-actions .btn-emergency i {
+    font-size: 1.1rem;
 }
 
 /* 响应式设计 */
@@ -517,14 +536,18 @@ body {
     }
 
     .alert-actions {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
         padding: 15px;
+        justify-content: space-between;
     }
 
     .btn {
-        width: 100%;
-        margin: 5px 0;
-        padding: 12px 20px;
+        flex: 1 0 auto;
+        min-width: 0;
+        margin: 5px;
+        padding: 12px 15px;
+        font-size: 0.9rem;
     }
 
     .alert-video {
@@ -744,4 +767,10 @@ body {
     .amap-info-content {
         max-width: 180px;
     }
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }

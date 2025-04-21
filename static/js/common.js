@@ -370,16 +370,14 @@ function apiGet(endpoint, params = {}) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
-                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                console.error('收到401未授权响应');
                 
-                // 显示友好的提示信息
-                const message = '会话已过期或未登录，请刷新页面或重新登录';
-                
-                // 创建一个悬浮提示
-                showAuthError(message);
+                // 不再显示弹窗提示
+                // const message = '会话已过期或未登录，请刷新页面或重新登录';
+                // showAuthError(message);
                 
                 // 抛出特定错误
-                throw new Error(`未授权访问: ${message}`);
+                throw new Error(`未授权访问`);
             }
             
             // 抛出错误以便调用者处理
@@ -509,16 +507,14 @@ function apiPost(endpoint, data = {}) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
-                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                console.error('收到401未授权响应');
                 
-                // 显示友好的提示信息
-                const message = '会话已过期或未登录，请刷新页面或重新登录';
-                
-                // 创建一个悬浮提示
-                showAuthError(message);
+                // 不再显示弹窗提示
+                // const message = '会话已过期或未登录，请刷新页面或重新登录';
+                // showAuthError(message);
                 
                 // 抛出特定错误
-                throw new Error(`未授权访问: ${message}`);
+                throw new Error(`未授权访问`);
             }
             
             // 尝试解析JSON响应，如果失败则返回普通错误
@@ -595,16 +591,14 @@ function apiPut(endpoint, data = {}) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
-                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                console.error('收到401未授权响应');
                 
-                // 显示友好的提示信息
-                const message = '会话已过期或未登录，请刷新页面或重新登录';
-                
-                // 创建一个悬浮提示
-                showAuthError(message);
+                // 不再显示弹窗提示
+                // const message = '会话已过期或未登录，请刷新页面或重新登录';
+                // showAuthError(message);
                 
                 // 抛出特定错误
-                throw new Error(`未授权访问: ${message}`);
+                throw new Error(`未授权访问`);
             }
             
             // 尝试解析JSON响应，如果失败则返回普通错误
@@ -672,16 +666,14 @@ function apiDelete(endpoint) {
         if (!response.ok) {
             // 处理401未授权错误
             if (response.status === 401) {
-                console.error('收到401未授权响应，但暂时禁用自动跳转');
+                console.error('收到401未授权响应');
                 
-                // 显示友好的提示信息
-                const message = '会话已过期或未登录，请刷新页面或重新登录';
-                
-                // 创建一个悬浮提示
-                showAuthError(message);
+                // 不再显示弹窗提示
+                // const message = '会话已过期或未登录，请刷新页面或重新登录';
+                // showAuthError(message);
                 
                 // 抛出特定错误
-                throw new Error(`未授权访问: ${message}`);
+                throw new Error(`未授权访问`);
             }
             
             // 抛出错误以便调用者处理
